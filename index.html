@@ -1,0 +1,3598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tennis Coach Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS VARIABLES & RESET ===== */
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #161d2e;
+  --bg-card-hover: #1c2540;
+  --bg-input: #0d1220;
+  --accent-green: #00e676;
+  --accent-green-dim: #00c853;
+  --accent-blue: #448aff;
+  --accent-orange: #ff9800;
+  --accent-red: #ff5252;
+  --accent-purple: #ce93d8;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8892a4;
+  --text-muted: #4a5568;
+  --border: #1e2a3a;
+  --border-light: #253245;
+  --p1-color: #00e676;
+  --p2-color: #448aff;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+/* ===== LAYOUT ===== */
+.app-layout { display: flex; min-height: 100vh; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 240px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent-green);
+  line-height: 1;
+}
+
+.logo-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.nav-menu {
+  flex: 1;
+  padding: 12px 0;
+  overflow-y: auto;
+}
+
+.nav-section-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 12px 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+.nav-item.active { background: rgba(0,230,118,0.08); color: var(--accent-green); border-left-color: var(--accent-green); }
+
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  margin-left: 240px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.topbar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+}
+
+.topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+.content-area { padding: 24px; flex: 1; }
+
+/* ===== SECTIONS ===== */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+
+.card:hover { border-color: var(--border-light); }
+
+.card-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.card-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.card-sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ===== GRID LAYOUTS ===== */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+/* ===== SECTION HEADER ===== */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 2px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+
+.btn-primary { background: var(--accent-green); color: #000; }
+.btn-primary:hover { background: #00ff87; transform: translateY(-1px); }
+
+.btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-light); }
+.btn-secondary:hover { background: var(--bg-card-hover); }
+
+.btn-danger { background: rgba(255,82,82,0.15); color: var(--accent-red); border: 1px solid rgba(255,82,82,0.3); }
+.btn-danger:hover { background: rgba(255,82,82,0.25); }
+
+.btn-blue { background: rgba(68,138,255,0.15); color: var(--accent-blue); border: 1px solid rgba(68,138,255,0.3); }
+.btn-blue:hover { background: rgba(68,138,255,0.25); }
+
+.btn-orange { background: rgba(255,152,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,152,0,0.3); }
+.btn-orange:hover { background: rgba(255,152,0,0.25); }
+
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-lg { padding: 12px 24px; font-size: 15px; }
+.btn-xl { padding: 16px 32px; font-size: 18px; border-radius: var(--radius); }
+
+/* ===== FORMS ===== */
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; display: block; font-weight: 500; letter-spacing: 0.5px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent-green); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-select option { background: var(--bg-card); }
+
+/* ===== TABLES ===== */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--bg-input); }
+th { padding: 12px 14px; text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+td { padding: 12px 14px; border-top: 1px solid var(--border); color: var(--text-secondary); vertical-align: middle; }
+tbody tr:hover { background: var(--bg-card-hover); }
+
+/* ===== BADGES ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-green { background: rgba(0,230,118,0.12); color: var(--accent-green); }
+.badge-red { background: rgba(255,82,82,0.12); color: var(--accent-red); }
+.badge-blue { background: rgba(68,138,255,0.12); color: var(--accent-blue); }
+.badge-orange { background: rgba(255,152,0,0.12); color: var(--accent-orange); }
+.badge-gray { background: rgba(138,146,164,0.12); color: var(--text-secondary); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+}
+
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  color: var(--accent-green);
+}
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ===== PLAYER CARDS ===== */
+.player-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+.player-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+
+.player-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.player-name { font-size: 16px; font-weight: 700; }
+.player-meta { font-size: 12px; color: var(--text-secondary); }
+
+/* ===== STATS ROW ===== */
+.stat-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: 12px; color: var(--text-secondary); }
+.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-wrap { display: flex; align-items: center; gap: 10px; }
+.progress-bar { flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+/* ===== LIVE TRACKING ===== */
+.live-scoreboard {
+  background: linear-gradient(135deg, #0d1a0f 0%, #0a1520 100%);
+  border: 2px solid var(--accent-green);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.scoreboard-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.player-score-info { display: flex; flex-direction: column; gap: 4px; }
+.score-name { font-size: 14px; font-weight: 700; }
+.score-sets { display: flex; gap: 6px; margin-top: 4px; }
+.score-set-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+}
+.score-set-badge.won { background: rgba(0,230,118,0.2); border-color: var(--accent-green); color: var(--accent-green); }
+
+.score-vs {
+  text-align: center;
+}
+.score-game {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 56px;
+  letter-spacing: 4px;
+  line-height: 1;
+  color: var(--text-primary);
+}
+.score-context {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+}
+
+.live-events-log {
+  max-height: 180px;
+  overflow-y: auto;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-top: 12px;
+}
+
+.event-log-item {
+  display: flex;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 4px;
+  align-items: flex-start;
+}
+.event-log-item:last-child { margin-bottom: 0; }
+.event-log-p1 { background: rgba(0,230,118,0.08); border-left: 3px solid var(--accent-green); }
+.event-log-p2 { background: rgba(68,138,255,0.08); border-left: 3px solid var(--accent-blue); }
+
+.live-quick-btns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.quick-btn {
+  padding: 12px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.quick-btn:hover { transform: scale(1.02); }
+.quick-btn.green { border-color: rgba(0,230,118,0.4); color: var(--accent-green); background: rgba(0,230,118,0.06); }
+.quick-btn.red { border-color: rgba(255,82,82,0.4); color: var(--accent-red); background: rgba(255,82,82,0.06); }
+.quick-btn.blue { border-color: rgba(68,138,255,0.4); color: var(--accent-blue); background: rgba(68,138,255,0.06); }
+.quick-btn.orange { border-color: rgba(255,152,0,0.4); color: var(--accent-orange); background: rgba(255,152,0,0.06); }
+
+.player-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.player-select-btn {
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.player-select-btn.p1.selected { border-color: var(--accent-green); background: rgba(0,230,118,0.1); color: var(--accent-green); }
+.player-select-btn.p2.selected { border-color: var(--accent-blue); background: rgba(68,138,255,0.1); color: var(--accent-blue); }
+
+/* ===== INSIGHTS ===== */
+.insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  border-left: 4px solid var(--accent-green);
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.insight-card:hover { border-left-color: var(--accent-green); background: var(--bg-card-hover); }
+.insight-card.warning { border-left-color: var(--accent-orange); }
+.insight-card.danger { border-left-color: var(--accent-red); }
+.insight-card.info { border-left-color: var(--accent-blue); }
+
+.insight-type { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; }
+.insight-card .insight-type { color: var(--accent-green); }
+.insight-card.warning .insight-type { color: var(--accent-orange); }
+.insight-card.danger .insight-type { color: var(--accent-red); }
+.insight-card.info .insight-type { color: var(--accent-blue); }
+
+.insight-text { font-size: 14px; color: var(--text-primary); line-height: 1.5; }
+
+/* ===== CALENDAR ===== */
+.match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.match-card:hover { border-color: var(--border-light); transform: translateX(2px); }
+
+.match-date-block {
+  text-align: center;
+  min-width: 50px;
+}
+.match-day { font-family: 'Bebas Neue', sans-serif; font-size: 28px; line-height: 1; }
+.match-month { font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+
+.match-info { flex: 1; }
+.match-players { font-weight: 700; font-size: 14px; }
+.match-details { font-size: 12px; color: var(--text-secondary); margin-top: 3px; }
+
+/* ===== COACH NOTES ===== */
+.note-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 8px;
+  position: relative;
+}
+.note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.note-meta { font-size: 11px; color: var(--text-muted); }
+.note-text { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+
+/* ===== TABS ===== */
+.tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab:hover { color: var(--text-secondary); }
+.tab.active { color: var(--accent-green); border-bottom-color: var(--accent-green); }
+
+/* ===== ALERT ===== */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.alert-success { background: rgba(0,230,118,0.1); border: 1px solid rgba(0,230,118,0.3); color: var(--accent-green); }
+.alert-error { background: rgba(255,82,82,0.1); border: 1px solid rgba(255,82,82,0.3); color: var(--accent-red); }
+.alert-info { background: rgba(68,138,255,0.1); border: 1px solid rgba(68,138,255,0.3); color: var(--accent-blue); }
+
+/* ===== CHART CONTAINERS ===== */
+.chart-container { position: relative; height: 220px; }
+
+/* ===== SERVE INDICATOR ===== */
+.serve-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ===== LIVE STATUS ===== */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,82,82,0.15);
+  border: 1px solid rgba(255,82,82,0.4);
+  color: var(--accent-red);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  animation: pulse 1s infinite;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state-title { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state-text { font-size: 13px; margin-bottom: 20px; }
+
+/* ===== DIVIDER ===== */
+.divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+/* ===== TOOLTIP ===== */
+.tooltip-wrap { position: relative; display: inline-block; }
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 999;
+}
+.tooltip-wrap:hover .tooltip { opacity: 1; }
+
+/* ===== COACH NOTE TYPES ===== */
+.note-type-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+/* ===== MOBILE TOGGLE ===== */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; }
+  .mobile-menu-btn { display: block; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .live-quick-btns { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+  .content-area { padding: 16px; }
+  .score-game { font-size: 40px; }
+  .live-quick-btns { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===== OVERLAY for mobile sidebar ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+}
+.sidebar-overlay.open { display: block; }
+
+/* ===== PLAYER COMPARE BAR ===== */
+.compare-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.compare-label { font-size: 12px; color: var(--text-secondary); width: 180px; }
+.compare-bar-wrap { flex: 1; position: relative; height: 20px; }
+.compare-bar-bg { height: 8px; border-radius: 4px; background: var(--bg-input); position: relative; top: 6px; }
+.compare-bar-p1 { position: absolute; left: 0; height: 8px; border-radius: 4px 0 0 4px; background: var(--accent-green); transition: width 0.5s; top: 6px; }
+.compare-bar-p2 { position: absolute; right: 0; height: 8px; border-radius: 0 4px 4px 0; background: var(--accent-blue); transition: width 0.5s; top: 6px; }
+.compare-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; width: 40px; text-align: right; }
+.compare-val-p1 { color: var(--accent-green); }
+.compare-val-p2 { color: var(--accent-blue); text-align: left; }
+
+/* ===== MATCH DETAIL ===== */
+.match-detail-header {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+/* ===== IMPORT/EXPORT ===== */
+.export-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.export-card:hover { border-color: var(--border-light); transform: translateX(4px); }
+.export-icon { font-size: 24px; }
+.export-info { flex: 1; }
+.export-title { font-weight: 700; font-size: 14px; }
+.export-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* ===== SPINNER ===== */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-green);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+/* ===== DRAG OVER ===== */
+.drop-zone {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius);
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.drop-zone:hover, .drop-zone.over {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(0,230,118,0.04);
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- APP LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">🎾 TCT</div>
+      <div class="logo-sub">Tennis Coach Tracker</div>
+    </div>
+
+    <div class="nav-menu">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="navigate('players')"><span class="nav-icon">👤</span> Jugadores</div>
+      <div class="nav-item" onclick="navigate('calendar')"><span class="nav-icon">📅</span> Calendario</div>
+
+      <div class="nav-section-label">Partido</div>
+      <div class="nav-item" onclick="navigate('new-match')"><span class="nav-icon">➕</span> Nuevo Partido</div>
+      <div class="nav-item" onclick="navigate('live')"><span class="nav-icon">🔴</span> Seguimiento Vivo</div>
+      <div class="nav-item" onclick="navigate('history')"><span class="nav-icon">📋</span> Histórico</div>
+
+      <div class="nav-section-label">Análisis</div>
+      <div class="nav-item" onclick="navigate('insights')"><span class="nav-icon">🧠</span> Coach Insights</div>
+      <div class="nav-item" onclick="navigate('notes')"><span class="nav-icon">📝</span> Notas del Coach</div>
+
+      <div class="nav-section-label">Sistema</div>
+      <div class="nav-item" onclick="navigate('export')"><span class="nav-icon">💾</span> Exportar / Importar</div>
+      <div class="nav-item" onclick="navigate('settings')"><span class="nav-icon">⚙️</span> Configuración</div>
+    </div>
+
+    <div class="sidebar-footer">v1.0 · Datos locales</div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+        <span class="topbar-title" id="topbarTitle">Dashboard</span>
+      </div>
+      <div class="topbar-actions">
+        <div id="liveIndicator" style="display:none;" class="live-badge"><div class="live-dot"></div>EN DIRECTO</div>
+        <button class="btn btn-secondary btn-sm" onclick="saveData()">💾 Guardar</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- ==================== DASHBOARD ==================== -->
+      <div class="section active" id="section-dashboard">
+        <div class="section-header">
+          <div class="section-title">Dashboard</div>
+          <button class="btn btn-primary btn-sm" onclick="navigate('new-match')">+ Nuevo Partido</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid-4" style="margin-bottom:20px;">
+          <div class="card">
+            <div class="card-title">Partidos registrados</div>
+            <div class="card-value" id="kpi-total">0</div>
+            <div class="card-sub">en el histórico</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Jugadores activos</div>
+            <div class="card-value" id="kpi-players">0</div>
+            <div class="card-sub">en la base de datos</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Próximo partido</div>
+            <div class="card-value" id="kpi-next" style="font-size:18px;margin-top:6px;">—</div>
+            <div class="card-sub" id="kpi-next-sub">—</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Último partido</div>
+            <div class="card-value" id="kpi-last" style="font-size:18px;margin-top:6px;">—</div>
+            <div class="card-sub" id="kpi-last-sub">—</div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card">
+            <div class="card-title">Errores No Forzados por partido</div>
+            <div class="chart-container"><canvas id="chartUFE"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Winners vs Errores</div>
+            <div class="chart-container"><canvas id="chartWinnersErrors"></canvas></div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div class="card">
+            <div class="card-title">% Primer Saque</div>
+            <div class="chart-container"><canvas id="chartFirstServe"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Resultados recientes</div>
+            <div class="chart-container"><canvas id="chartResults"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Coach summary -->
+        <div class="card" id="coachSummaryCard">
+          <div class="card-title">💡 Resumen del Coach</div>
+          <div id="coachSummaryText" style="font-size:14px;line-height:1.7;color:var(--text-secondary);">
+            Registra partidos para ver un resumen automático de rendimiento.
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== PLAYERS ==================== -->
+      <div class="section" id="section-players">
+        <div class="section-header">
+          <div class="section-title">Jugadores</div>
+          <button class="btn btn-primary" onclick="openPlayerModal()">+ Añadir Jugador</button>
+        </div>
+
+        <div id="playersGrid" class="grid-3">
+          <div class="empty-state" style="grid-column:1/-1;">
+            <div class="empty-state-icon">👤</div>
+            <div class="empty-state-title">Sin jugadores</div>
+            <div class="empty-state-text">Crea tu primer jugador para empezar</div>
+            <button class="btn btn-primary" onclick="openPlayerModal()">+ Añadir Jugador</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== CALENDAR ==================== -->
+      <div class="section" id="section-calendar">
+        <div class="section-header">
+          <div class="section-title">Calendario</div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-secondary btn-sm" onclick="openImportCalendarModal()">📥 Importar CSV</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadCSVTemplate()">📄 Plantilla CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="openCalendarMatchModal()">+ Programar</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" style="width:auto;" id="calFilter" onchange="renderCalendar()">
+            <option value="all">Todos los partidos</option>
+            <option value="pending">Pendientes</option>
+            <option value="playing">En juego</option>
+            <option value="finished">Finalizados</option>
+            <option value="cancelled">Cancelados</option>
+          </select>
+        </div>
+
+        <div id="calendarList"></div>
+      </div>
+
+      <!-- ==================== NEW MATCH ==================== -->
+      <div class="section" id="section-new-match">
+        <div class="section-header">
+          <div class="section-title">Nuevo Partido</div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Jugadores</div>
+              <div class="form-group">
+                <label class="form-label">Jugador 1</label>
+                <select class="form-select" id="nm-p1">
+                  <option value="">Seleccionar jugador...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Jugador 2</label>
+                <select class="form-select" id="nm-p2">
+                  <option value="">Seleccionar jugador...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Detalles</div>
+              <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" class="form-input" id="nm-date">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Hora</label>
+                <input type="time" class="form-input" id="nm-time">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lugar</label>
+                <input type="text" class="form-input" id="nm-place" placeholder="Nombre del club / pista">
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Configuración del partido</div>
+              <div class="form-group">
+                <label class="form-label">Superficie</label>
+                <select class="form-select" id="nm-surface">
+                  <option value="hard">Dura</option>
+                  <option value="clay">Tierra batida</option>
+                  <option value="grass">Hierba</option>
+                  <option value="indoor">Indoor</option>
+                  <option value="other">Otra</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de partido</label>
+                <select class="form-select" id="nm-type">
+                  <option value="training">Entrenamiento</option>
+                  <option value="competition">Competición</option>
+                  <option value="friendly">Amistoso</option>
+                  <option value="tournament">Torneo</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Formato</label>
+                <select class="form-select" id="nm-format">
+                  <option value="bo3">Mejor de 3 sets</option>
+                  <option value="bo5">Mejor de 5 sets</option>
+                  <option value="supertb">Súper Tie-Break</option>
+                  <option value="training">Set de entrenamiento</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Objetivos del partido</div>
+              <div id="nm-objectives" style="display:flex;flex-wrap:wrap;gap:8px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="first_serve"> Mejorar primer saque</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="reduce_ufe"> Reducir errores no forzados</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="net"> Subir más a la red</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="aggressive"> Ser más agresivo al resto</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="big_points"> Mejorar puntos importantes</label>
+              </div>
+              <div class="form-group" style="margin-top:12px;margin-bottom:0;">
+                <label class="form-label">Notas previas del coach</label>
+                <textarea class="form-textarea" id="nm-notes" placeholder="Observaciones antes del partido..."></textarea>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-primary btn-lg" style="flex:1;" onclick="createMatchAndTrack()">🎾 Iniciar Seguimiento</button>
+              <button class="btn btn-secondary btn-lg" onclick="createMatchOnly()">Guardar sin iniciar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== LIVE TRACKING ==================== -->
+      <div class="section" id="section-live">
+        <div class="section-header">
+          <div class="section-title">Seguimiento en Directo</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="live-badge"><div class="live-dot"></div>EN DIRECTO</div>
+            <button class="btn btn-secondary btn-sm" onclick="undoLastEvent()">↩ Deshacer</button>
+            <button class="btn btn-orange btn-sm" onclick="finishMatch()">✓ Finalizar</button>
+          </div>
+        </div>
+
+        <!-- No match warning -->
+        <div id="noMatchWarning" style="display:none;">
+          <div class="empty-state">
+            <div class="empty-state-icon">🎾</div>
+            <div class="empty-state-title">Sin partido activo</div>
+            <div class="empty-state-text">Crea un nuevo partido para iniciar el seguimiento en directo</div>
+            <button class="btn btn-primary" onclick="navigate('new-match')">+ Nuevo Partido</button>
+          </div>
+        </div>
+
+        <div id="liveMatchContent">
+          <!-- SCOREBOARD -->
+          <div class="live-scoreboard">
+            <div class="scoreboard-header">
+              <div class="player-score-info">
+                <div class="score-name" id="live-p1-name" style="color:var(--accent-green)">—</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                  <span class="serve-dot" id="serve-p1" style="display:none;"></span>
+                  <span style="font-size:12px;color:var(--text-muted);" id="serve-p1-label"></span>
+                </div>
+                <div class="score-sets" id="live-p1-sets"></div>
+              </div>
+
+              <div class="score-vs">
+                <div class="score-game" id="live-score-display">0 - 0</div>
+                <div class="score-context" id="live-score-context">Puntos</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="live-game-info">Juego 1 · Set 1</div>
+              </div>
+
+              <div class="player-score-info" style="text-align:right;align-items:flex-end;">
+                <div class="score-name" id="live-p2-name" style="color:var(--accent-blue)">—</div>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-direction:row-reverse;">
+                  <span class="serve-dot" id="serve-p2" style="display:none;"></span>
+                  <span style="font-size:12px;color:var(--text-muted);" id="serve-p2-label"></span>
+                </div>
+                <div class="score-sets" id="live-p2-sets"></div>
+              </div>
+            </div>
+
+            <!-- Last events log -->
+            <div class="live-events-log" id="liveEventsLog">
+              <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px 0;">Los eventos aparecerán aquí...</div>
+            </div>
+          </div>
+
+          <!-- POINT REGISTRATION -->
+          <div class="grid-2">
+            <div>
+              <!-- Quick buttons -->
+              <div class="card" style="margin-bottom:16px;">
+                <div class="card-title">Botones Rápidos</div>
+                <div class="live-quick-btns">
+                  <button class="quick-btn green" onclick="quickEvent('ace')">🎯 Ace</button>
+                  <button class="quick-btn red" onclick="quickEvent('double_fault')">❌ Doble Falta</button>
+                  <button class="quick-btn green" onclick="quickEvent('winner_fh')">✅ Winner DH</button>
+                  <button class="quick-btn green" onclick="quickEvent('winner_bh')">✅ Winner RV</button>
+                  <button class="quick-btn red" onclick="quickEvent('ufe_fh')">⚠ Error NF DH</button>
+                  <button class="quick-btn red" onclick="quickEvent('ufe_bh')">⚠ Error NF RV</button>
+                  <button class="quick-btn blue" onclick="quickEvent('return_winner')">↩ Resto Ganador</button>
+                  <button class="quick-btn orange" onclick="quickEvent('return_error')">↩ Resto Fallado</button>
+                  <button class="quick-btn blue" onclick="quickEvent('net_point')">🔝 Punto Red</button>
+                  <button class="quick-btn green" onclick="quickEvent('rally_won')">🔄 Rally Ganado</button>
+                  <button class="quick-btn red" onclick="quickEvent('rally_lost')">🔄 Rally Perdido</button>
+                  <button class="quick-btn orange" onclick="quickEvent('forced_error')">💥 Error Forzado</button>
+                </div>
+              </div>
+
+              <!-- Player selector -->
+              <div class="card" style="margin-bottom:16px;">
+                <div class="card-title">¿Quién ganó el punto?</div>
+                <div class="player-selector">
+                  <button class="player-select-btn p1" id="selectP1Btn" onclick="selectPointWinner(1)">— P1</button>
+                  <button class="player-select-btn p2" id="selectP2Btn" onclick="selectPointWinner(2)">P2 —</button>
+                </div>
+                <div class="card-title" style="margin-top:12px;">Servidor</div>
+                <div class="player-selector">
+                  <button class="player-select-btn p1" id="serverP1Btn" onclick="selectServer(1)">P1 saca</button>
+                  <button class="player-select-btn p2" id="serverP2Btn" onclick="selectServer(2)">P2 saca</button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <!-- Detailed event form -->
+              <div class="card" style="margin-bottom:16px;">
+                <div class="card-title">Detalle del punto</div>
+                <div class="form-group">
+                  <label class="form-label">Tipo de punto</label>
+                  <select class="form-select" id="ev-type">
+                    <option value="winner">Winner</option>
+                    <option value="ufe">Error no forzado</option>
+                    <option value="forced_error">Error forzado</option>
+                    <option value="ace">Ace / Saque directo</option>
+                    <option value="double_fault">Doble falta</option>
+                    <option value="net_winner">Punto ganado en red</option>
+                    <option value="return_winner">Resto ganador</option>
+                    <option value="return_error">Resto fallado</option>
+                    <option value="rally_long">Punto largo (9+ golpes)</option>
+                    <option value="rally_medium">Punto medio (5-8 golpes)</option>
+                    <option value="rally_short">Punto corto (0-4 golpes)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Golpe relacionado</label>
+                  <select class="form-select" id="ev-shot">
+                    <option value="serve">Saque</option>
+                    <option value="return">Resto</option>
+                    <option value="forehand">Derecha</option>
+                    <option value="backhand">Revés</option>
+                    <option value="volley">Volea</option>
+                    <option value="smash">Smash</option>
+                    <option value="dropshot">Dejada</option>
+                    <option value="lob">Globo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Zona</label>
+                  <select class="form-select" id="ev-zone">
+                    <option value="deuce">Lado derecho</option>
+                    <option value="ad">Lado revés</option>
+                    <option value="center">Centro</option>
+                    <option value="net">Red</option>
+                    <option value="back">Fondo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Contexto</label>
+                  <select class="form-select" id="ev-context">
+                    <option value="normal">Normal</option>
+                    <option value="breakpoint">Break point</option>
+                    <option value="setpoint">Set point</option>
+                    <option value="matchpoint">Match point</option>
+                    <option value="deuce">Deuce</option>
+                    <option value="advantage">Ventaja</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Duración del punto</label>
+                  <select class="form-select" id="ev-duration">
+                    <option value="short">0-4 golpes</option>
+                    <option value="medium">5-8 golpes</option>
+                    <option value="long">9+ golpes</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nota del coach</label>
+                  <input type="text" class="form-input" id="ev-note" placeholder="Observación rápida...">
+                </div>
+                <button class="btn btn-primary" style="width:100%;" onclick="registerPoint()">✓ Registrar Punto</button>
+              </div>
+
+              <!-- Live stats mini -->
+              <div class="card">
+                <div class="card-title">Estadísticas del Partido</div>
+                <div id="liveStatsContainer">
+                  <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Inicia el partido para ver estadísticas</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== HISTORY ==================== -->
+      <div class="section" id="section-history">
+        <div class="section-header">
+          <div class="section-title">Histórico de Partidos</div>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" style="width:auto;" id="hf-player" onchange="renderHistory()">
+            <option value="">Todos los jugadores</option>
+          </select>
+          <select class="form-select" style="width:auto;" id="hf-surface" onchange="renderHistory()">
+            <option value="">Todas las superficies</option>
+            <option value="hard">Dura</option>
+            <option value="clay">Tierra</option>
+            <option value="grass">Hierba</option>
+            <option value="indoor">Indoor</option>
+          </select>
+          <select class="form-select" style="width:auto;" id="hf-type" onchange="renderHistory()">
+            <option value="">Todos los tipos</option>
+            <option value="training">Entrenamiento</option>
+            <option value="competition">Competición</option>
+            <option value="friendly">Amistoso</option>
+            <option value="tournament">Torneo</option>
+          </select>
+          <input type="date" class="form-input" id="hf-from" style="width:auto;" onchange="renderHistory()" placeholder="Desde">
+          <input type="date" class="form-input" id="hf-to" style="width:auto;" onchange="renderHistory()" placeholder="Hasta">
+          <button class="btn btn-secondary btn-sm" onclick="clearHistoryFilters()">✕ Limpiar</button>
+        </div>
+
+        <div class="table-wrap" id="historyTable">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">Sin partidos registrados</div>
+            <div class="empty-state-text">Los partidos finalizados aparecerán aquí</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== INSIGHTS ==================== -->
+      <div class="section" id="section-insights">
+        <div class="section-header">
+          <div class="section-title">Coach Intelligence</div>
+          <button class="btn btn-primary btn-sm" onclick="generateInsights()">🔄 Actualizar Insights</button>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" style="width:auto;" id="ins-player" onchange="generateInsights()">
+            <option value="">Todos los jugadores</option>
+          </select>
+        </div>
+
+        <!-- Insights grid -->
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div>
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-green);margin-bottom:12px;font-weight:700;">💪 Fortalezas</div>
+            <div id="insightsStrengths"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-red);margin-bottom:12px;font-weight:700;">⚠ Debilidades</div>
+            <div id="insightsWeaknesses"></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:20px;">
+          <div>
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-blue);margin-bottom:12px;font-weight:700;">📈 Patrones y tendencias</div>
+            <div id="insightsPatterns"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent-orange);margin-bottom:12px;font-weight:700;">🎯 Recomendaciones</div>
+            <div id="insightsRecommendations"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔔 Alertas de rendimiento</div>
+          <div id="insightsAlerts"></div>
+        </div>
+      </div>
+
+      <!-- ==================== NOTES ==================== -->
+      <div class="section" id="section-notes">
+        <div class="section-header">
+          <div class="section-title">Notas del Coach</div>
+          <button class="btn btn-primary" onclick="openNoteModal()">+ Nueva Nota</button>
+        </div>
+
+        <div class="filter-bar">
+          <select class="form-select" style="width:auto;" id="nf-player" onchange="renderNotes()">
+            <option value="">Todos los jugadores</option>
+          </select>
+          <select class="form-select" style="width:auto;" id="nf-type" onchange="renderNotes()">
+            <option value="">Todos los tipos</option>
+            <option value="technical">Técnico</option>
+            <option value="tactical">Táctico</option>
+            <option value="mental">Mental</option>
+            <option value="physical">Físico</option>
+            <option value="nutrition">Nutrición</option>
+            <option value="injury">Lesión/Molestia</option>
+            <option value="attitude">Actitud</option>
+            <option value="decision">Toma de decisiones</option>
+            <option value="pressure">Presión competitiva</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+
+        <div id="notesList"></div>
+      </div>
+
+      <!-- ==================== EXPORT / IMPORT ==================== -->
+      <div class="section" id="section-export">
+        <div class="section-header">
+          <div class="section-title">Exportar / Importar</div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="card-title" style="margin-bottom:12px;">📤 Exportar</div>
+            <div class="export-card" onclick="exportJSON()">
+              <div class="export-icon">💾</div>
+              <div class="export-info">
+                <div class="export-title">Backup completo (JSON)</div>
+                <div class="export-desc">Exporta todos los datos: jugadores, partidos, eventos y notas</div>
+              </div>
+              <div class="badge badge-green">JSON</div>
+            </div>
+            <div class="export-card" onclick="exportMatchesCSV()">
+              <div class="export-icon">📊</div>
+              <div class="export-info">
+                <div class="export-title">Partidos (CSV)</div>
+                <div class="export-desc">Lista de todos los partidos con estadísticas principales</div>
+              </div>
+              <div class="badge badge-blue">CSV</div>
+            </div>
+            <div class="export-card" onclick="exportPlayersCSV()">
+              <div class="export-icon">👤</div>
+              <div class="export-info">
+                <div class="export-title">Jugadores (CSV)</div>
+                <div class="export-desc">Fichas de todos los jugadores registrados</div>
+              </div>
+              <div class="badge badge-blue">CSV</div>
+            </div>
+            <div class="export-card" onclick="printReport()">
+              <div class="export-icon">🖨️</div>
+              <div class="export-info">
+                <div class="export-title">Imprimir / PDF</div>
+                <div class="export-desc">Genera un informe imprimible del histórico</div>
+              </div>
+              <div class="badge badge-orange">PDF</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card-title" style="margin-bottom:12px;">📥 Importar</div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Importar backup JSON</div>
+              <div class="drop-zone" id="dropZoneJSON" onclick="document.getElementById('importJSONInput').click()" ondragover="dropZoneOver(event,'dropZoneJSON')" ondragleave="dropZoneLeave('dropZoneJSON')" ondrop="dropJSON(event)">
+                <div style="font-size:32px;margin-bottom:8px;">📁</div>
+                <div style="font-size:13px;font-weight:600;">Arrastra o haz clic para importar JSON</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">⚠ Sobrescribirá los datos actuales</div>
+              </div>
+              <input type="file" id="importJSONInput" accept=".json" style="display:none;" onchange="importJSON(event)">
+            </div>
+
+            <div class="card" style="margin-bottom:16px;">
+              <div class="card-title">Importar calendario CSV</div>
+              <div class="drop-zone" id="dropZoneCSV" onclick="document.getElementById('importCSVInput').click()">
+                <div style="font-size:32px;margin-bottom:8px;">📅</div>
+                <div style="font-size:13px;font-weight:600;">Arrastra o haz clic para importar CSV</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">fecha, hora, jugador1, jugador2, lugar, tipo_pista, tipo_partido, notas</div>
+              </div>
+              <input type="file" id="importCSVInput" accept=".csv" style="display:none;" onchange="importCalendarCSV(event)">
+            </div>
+
+            <div class="card">
+              <div class="card-title" style="color:var(--accent-red);">🗑️ Zona peligrosa</div>
+              <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">Esta acción eliminará permanentemente todos los datos.</p>
+              <button class="btn btn-danger" onclick="clearAllData()">🗑 Borrar todos los datos</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="importAlert" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- ==================== SETTINGS ==================== -->
+      <div class="section" id="section-settings">
+        <div class="section-header">
+          <div class="section-title">Configuración</div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">General</div>
+            <div class="form-group">
+              <label class="form-label">Nombre del coach</label>
+              <input type="text" class="form-input" id="cfg-coach-name" placeholder="Tu nombre">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Club / Academia</label>
+              <input type="text" class="form-input" id="cfg-club" placeholder="Nombre del club">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color Jugador 1</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="color" id="cfg-p1-color" value="#00e676" style="width:40px;height:36px;border:none;background:none;cursor:pointer;">
+                <span style="font-size:12px;color:var(--text-secondary);">Color identificador del jugador 1</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color Jugador 2</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="color" id="cfg-p2-color" value="#448aff" style="width:40px;height:36px;border:none;background:none;cursor:pointer;">
+                <span style="font-size:12px;color:var(--text-secondary);">Color identificador del jugador 2</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Guardar configuración</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Información</div>
+            <div class="stat-row">
+              <span class="stat-label">Versión</span>
+              <span class="stat-value">1.0.0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Jugadores</span>
+              <span class="stat-value" id="cfg-count-players">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Partidos</span>
+              <span class="stat-value" id="cfg-count-matches">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Eventos registrados</span>
+              <span class="stat-value" id="cfg-count-events">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Notas del coach</span>
+              <span class="stat-value" id="cfg-count-notes">0</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Almacenamiento</span>
+              <span class="stat-value" id="cfg-storage">calculando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-content -->
+</div><!-- /app-layout -->
+
+<!-- ==================== MODALS ==================== -->
+
+<!-- Player Modal -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal">
+    <div class="modal-title" id="playerModalTitle">Nuevo Jugador</div>
+    <input type="hidden" id="pm-id">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="pm-name" placeholder="Nombre del jugador">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Edad</label>
+        <input type="number" class="form-input" id="pm-age" placeholder="Años" min="5" max="80">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mano dominante</label>
+        <select class="form-select" id="pm-hand">
+          <option value="right">Diestro</option>
+          <option value="left">Zurdo</option>
+          <option value="ambidextrous">Ambidiestro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de revés</label>
+        <select class="form-select" id="pm-backhand">
+          <option value="two">Dos manos</option>
+          <option value="one">Una mano</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nivel</label>
+        <select class="form-select" id="pm-level">
+          <option value="beginner">Iniciación</option>
+          <option value="intermediate">Intermedio</option>
+          <option value="advanced">Avanzado</option>
+          <option value="competitive">Competitivo</option>
+          <option value="professional">Profesional</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="pm-email" placeholder="email@ejemplo.com">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fortalezas</label>
+      <input type="text" class="form-input" id="pm-strengths" placeholder="Ej: Primer saque, derecha agresiva...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Debilidades</label>
+      <input type="text" class="form-input" id="pm-weaknesses" placeholder="Ej: Revés, puntos largos...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Objetivos de entrenamiento</label>
+      <input type="text" class="form-input" id="pm-goals" placeholder="Ej: Mejorar consistencia, subir ranking...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observaciones del coach</label>
+      <textarea class="form-textarea" id="pm-notes" placeholder="Notas generales sobre el jugador..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('playerModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePlayer()">Guardar Jugador</button>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar Match Modal -->
+<div class="modal-overlay" id="calendarModal">
+  <div class="modal">
+    <div class="modal-title">Programar Partido</div>
+    <input type="hidden" id="cal-id">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Fecha *</label>
+        <input type="date" class="form-input" id="cal-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input type="time" class="form-input" id="cal-time">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jugador 1 *</label>
+        <select class="form-select" id="cal-p1"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jugador 2 *</label>
+        <select class="form-select" id="cal-p2"></select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Lugar</label>
+      <input type="text" class="form-input" id="cal-place" placeholder="Club / Pista">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Superficie</label>
+        <select class="form-select" id="cal-surface">
+          <option value="hard">Dura</option>
+          <option value="clay">Tierra batida</option>
+          <option value="grass">Hierba</option>
+          <option value="indoor">Indoor</option>
+          <option value="other">Otra</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="cal-type">
+          <option value="training">Entrenamiento</option>
+          <option value="competition">Competición</option>
+          <option value="friendly">Amistoso</option>
+          <option value="tournament">Torneo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas</label>
+      <textarea class="form-textarea" id="cal-notes" placeholder="Notas previas al partido..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('calendarModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCalendarMatch()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <div class="modal-title">Nueva Nota del Coach</div>
+    <input type="hidden" id="note-id">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Jugador *</label>
+        <select class="form-select" id="note-player"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo de nota *</label>
+        <select class="form-select" id="note-type">
+          <option value="technical">Técnico</option>
+          <option value="tactical">Táctico</option>
+          <option value="mental">Mental</option>
+          <option value="physical">Físico</option>
+          <option value="nutrition">Nutrición</option>
+          <option value="injury">Lesión/Molestia</option>
+          <option value="attitude">Actitud</option>
+          <option value="decision">Toma de decisiones</option>
+          <option value="pressure">Presión competitiva</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="note-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioridad</label>
+        <select class="form-select" id="note-priority">
+          <option value="low">Baja</option>
+          <option value="medium">Media</option>
+          <option value="high">Alta</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observación *</label>
+      <textarea class="form-textarea" id="note-text" rows="4" placeholder="Escribe tu observación..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('noteModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNote()">Guardar Nota</button>
+    </div>
+  </div>
+</div>
+
+<!-- Finish Match Modal -->
+<div class="modal-overlay" id="finishMatchModal">
+  <div class="modal">
+    <div class="modal-title">Finalizar Partido</div>
+    <div class="form-group">
+      <label class="form-label">Resultado (ej: 6-4, 6-3)</label>
+      <input type="text" class="form-input" id="fm-result" placeholder="6-4, 3-6, 7-5">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ganador</label>
+      <select class="form-select" id="fm-winner">
+        <option value="">Sin ganador (inacabado)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas finales del coach</label>
+      <textarea class="form-textarea" id="fm-notes" placeholder="Resumen del partido..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('finishMatchModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmFinishMatch()">Finalizar Partido</button>
+    </div>
+  </div>
+</div>
+
+<!-- Match Detail Modal -->
+<div class="modal-overlay" id="matchDetailModal">
+  <div class="modal" style="max-width:800px;">
+    <div class="modal-title">Detalle del Partido</div>
+    <div id="matchDetailContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('matchDetailModal')">Cerrar</button>
+      <button class="btn btn-blue" onclick="exportMatchReportHTML()">📄 Exportar Informe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Player Detail Modal -->
+<div class="modal-overlay" id="playerDetailModal">
+  <div class="modal" style="max-width:700px;">
+    <div id="playerDetailContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('playerDetailModal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Calendar Modal (CSV preview) -->
+<div class="modal-overlay" id="importCalendarModal">
+  <div class="modal" style="max-width:700px;">
+    <div class="modal-title">Importar Calendario CSV</div>
+    <div class="drop-zone" onclick="document.getElementById('calCSVInput').click()">
+      <div style="font-size:32px;margin-bottom:8px;">📅</div>
+      <div style="font-size:13px;font-weight:600;">Selecciona tu archivo CSV</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">fecha,hora,jugador1,jugador2,lugar,tipo_pista,tipo_partido,notas</div>
+    </div>
+    <input type="file" id="calCSVInput" accept=".csv" style="display:none;" onchange="previewCalendarCSV(event)">
+    <div id="csvPreview" style="margin-top:12px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('importCalendarModal')">Cancelar</button>
+      <button class="btn btn-primary" id="importCSVConfirmBtn" style="display:none;" onclick="confirmImportCalendarCSV()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE
+// ============================================================
+let db = {
+  players: [],
+  matches: [],      // scheduled / finished matches (calendar + history)
+  events: [],       // point-by-point events
+  notes: [],        // coach notes
+  settings: { coachName: '', club: '', p1Color: '#00e676', p2Color: '#448aff' }
+};
+
+let currentMatch = null; // active live match
+let selectedPointWinner = null; // 1 or 2
+let selectedServer = 1; // 1 or 2
+let csvImportBuffer = []; // for calendar CSV import preview
+
+// ---- Score state for live ----
+let liveScore = {
+  sets: [],            // [{p1:x, p2:y}]
+  currentSet: { p1: 0, p2: 0 },
+  currentGame: { p1: 0, p2: 0 }, // 0-1-2-3-4=game (game point indices)
+  setNumber: 1,
+  gameNumber: 1,
+  isTieBreak: false
+};
+
+const GAME_POINTS = ['0', '15', '30', '40', 'A'];
+
+// ============================================================
+// PERSISTENCE
+// ============================================================
+function saveData() {
+  try {
+    localStorage.setItem('tct_db', JSON.stringify(db));
+    showToast('💾 Datos guardados', 'success');
+  } catch(e) {
+    showToast('Error al guardar: ' + e.message, 'error');
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem('tct_db');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      db = { ...db, ...parsed };
+    }
+    const liveSaved = localStorage.getItem('tct_live');
+    if (liveSaved) {
+      const liveData = JSON.parse(liveSaved);
+      currentMatch = liveData.match;
+      liveScore = liveData.score;
+      if (currentMatch) {
+        document.getElementById('liveIndicator').style.display = 'flex';
+        renderLiveScoreboard();
+        renderLiveStats();
+      }
+    }
+  } catch(e) { console.error('Load error:', e); }
+}
+
+function saveLiveState() {
+  if (currentMatch) {
+    localStorage.setItem('tct_live', JSON.stringify({ match: currentMatch, score: liveScore }));
+  }
+}
+
+function clearLiveState() {
+  localStorage.removeItem('tct_live');
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateShort(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+}
+
+function getPlayer(id) {
+  return db.players.find(p => p.id === id);
+}
+
+function playerName(id) {
+  const p = getPlayer(id);
+  return p ? p.name : '?';
+}
+
+function surfaceLabel(s) {
+  const map = { hard:'Dura', clay:'Tierra', grass:'Hierba', indoor:'Indoor', other:'Otra' };
+  return map[s] || s;
+}
+
+function typeLabel(t) {
+  const map = { training:'Entrenamiento', competition:'Competición', friendly:'Amistoso', tournament:'Torneo' };
+  return map[t] || t;
+}
+
+function statusBadge(s) {
+  const map = {
+    pending: '<span class="badge badge-orange">Pendiente</span>',
+    playing: '<span class="badge badge-red">En Juego</span>',
+    finished: '<span class="badge badge-green">Finalizado</span>',
+    cancelled: '<span class="badge badge-gray">Cancelado</span>'
+  };
+  return map[s] || s;
+}
+
+function showToast(msg, type='success') {
+  const div = document.createElement('div');
+  div.style.cssText = `position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;animation:slideIn .3s ease;max-width:320px;`;
+  if (type === 'success') div.style.cssText += 'background:#00e676;color:#000;';
+  else if (type === 'error') div.style.cssText += 'background:#ff5252;color:#fff;';
+  else div.style.cssText += 'background:#448aff;color:#fff;';
+  div.textContent = msg;
+  document.body.appendChild(div);
+  setTimeout(() => { if(div.parentNode) div.parentNode.removeChild(div); }, 3000);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(section) {
+  // Hide all sections
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  // Show target
+  const target = document.getElementById('section-' + section);
+  if (target) target.classList.add('active');
+
+  // Highlight nav
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + section + "'")) {
+      n.classList.add('active');
+    }
+  });
+
+  // Update topbar title
+  const titles = {
+    dashboard: 'Dashboard',
+    players: 'Jugadores',
+    calendar: 'Calendario',
+    'new-match': 'Nuevo Partido',
+    live: 'Seguimiento en Directo',
+    history: 'Histórico de Partidos',
+    insights: 'Coach Intelligence',
+    notes: 'Notas del Coach',
+    export: 'Exportar / Importar',
+    settings: 'Configuración'
+  };
+  document.getElementById('topbarTitle').textContent = titles[section] || section;
+
+  // Section-specific init
+  if (section === 'dashboard') refreshDashboard();
+  if (section === 'players') renderPlayers();
+  if (section === 'calendar') { populatePlayerSelects(); renderCalendar(); }
+  if (section === 'new-match') { populatePlayerSelects(); setDefaultDate(); }
+  if (section === 'live') renderLiveSection();
+  if (section === 'history') { populateHistoryFilters(); renderHistory(); }
+  if (section === 'insights') { populateInsightsFilter(); generateInsights(); }
+  if (section === 'notes') { populateNoteFilters(); renderNotes(); }
+  if (section === 'settings') refreshSettings();
+
+  closeSidebar();
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('nm-date').value = today;
+  const now = new Date();
+  document.getElementById('nm-time').value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+}
+
+// ============================================================
+// PLAYER SELECTS POPULATION
+// ============================================================
+function populatePlayerSelects() {
+  const selects = ['nm-p1','nm-p2','cal-p1','cal-p2','note-player','hf-player','nf-player','ins-player','fm-winner'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = id.startsWith('hf-') || id === 'nf-player' || id === 'ins-player'
+      ? '<option value="">Todos los jugadores</option>'
+      : id === 'fm-winner'
+      ? '<option value="">Sin ganador (inacabado)</option>'
+      : '<option value="">Seleccionar jugador...</option>';
+    db.players.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name;
+      el.appendChild(opt);
+    });
+    if (prev) el.value = prev;
+  });
+
+  // For finish modal, populate with current match players
+  if (currentMatch) {
+    const fw = document.getElementById('fm-winner');
+    if (fw) {
+      fw.innerHTML = '<option value="">Sin ganador</option>';
+      if (currentMatch.p1) { const o = document.createElement('option'); o.value = currentMatch.p1; o.textContent = playerName(currentMatch.p1) + ' (P1)'; fw.appendChild(o); }
+      if (currentMatch.p2) { const o = document.createElement('option'); o.value = currentMatch.p2; o.textContent = playerName(currentMatch.p2) + ' (P2)'; fw.appendChild(o); }
+    }
+  }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let dashCharts = {};
+
+function refreshDashboard() {
+  const finished = db.matches.filter(m => m.status === 'finished');
+  document.getElementById('kpi-total').textContent = finished.length;
+  document.getElementById('kpi-players').textContent = db.players.length;
+
+  // Next match
+  const today = new Date();
+  const upcoming = db.matches.filter(m => m.status === 'pending' && new Date(m.date) >= today)
+    .sort((a,b) => new Date(a.date)-new Date(b.date));
+  if (upcoming.length) {
+    const n = upcoming[0];
+    document.getElementById('kpi-next').textContent = formatDateShort(n.date);
+    document.getElementById('kpi-next-sub').textContent = (playerName(n.p1)||n.p1Name||'—') + ' vs ' + (playerName(n.p2)||n.p2Name||'—');
+  }
+
+  // Last match
+  const past = [...finished].sort((a,b) => new Date(b.date)-new Date(a.date));
+  if (past.length) {
+    const l = past[0];
+    document.getElementById('kpi-last').textContent = formatDateShort(l.date);
+    document.getElementById('kpi-last-sub').textContent = (playerName(l.p1)||l.p1Name||'—') + ' vs ' + (playerName(l.p2)||l.p2Name||'—');
+  }
+
+  renderDashboardCharts(finished);
+  renderCoachSummary(finished);
+}
+
+function renderDashboardCharts(matches) {
+  const recent = matches.slice(-10);
+
+  // Chart UFE
+  destroyChart('chartUFE');
+  const ctxUFE = document.getElementById('chartUFE').getContext('2d');
+  dashCharts['chartUFE'] = new Chart(ctxUFE, {
+    type: 'line',
+    data: {
+      labels: recent.map(m => formatDateShort(m.date)),
+      datasets: [
+        {
+          label: db.players[0]?.name || 'P1',
+          data: recent.map(m => (m.stats?.p1 || {}).ufe || 0),
+          borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,0.1)',
+          tension: 0.4, fill: true, pointRadius: 4
+        },
+        {
+          label: db.players[1]?.name || 'P2',
+          data: recent.map(m => (m.stats?.p2 || {}).ufe || 0),
+          borderColor: '#448aff', backgroundColor: 'rgba(68,138,255,0.1)',
+          tension: 0.4, fill: true, pointRadius: 4
+        }
+      ]
+    },
+    options: chartOptions()
+  });
+
+  // Chart Winners vs Errors
+  destroyChart('chartWinnersErrors');
+  const ctxWE = document.getElementById('chartWinnersErrors').getContext('2d');
+  const totW1 = matches.reduce((a,m) => a + ((m.stats?.p1||{}).winners||0), 0);
+  const totE1 = matches.reduce((a,m) => a + ((m.stats?.p1||{}).ufe||0), 0);
+  const totW2 = matches.reduce((a,m) => a + ((m.stats?.p2||{}).winners||0), 0);
+  const totE2 = matches.reduce((a,m) => a + ((m.stats?.p2||{}).ufe||0), 0);
+  dashCharts['chartWinnersErrors'] = new Chart(ctxWE, {
+    type: 'bar',
+    data: {
+      labels: ['Winners P1', 'Errores P1', 'Winners P2', 'Errores P2'],
+      datasets: [{
+        data: [totW1, totE1, totW2, totE2],
+        backgroundColor: ['rgba(0,230,118,0.6)', 'rgba(255,82,82,0.6)', 'rgba(68,138,255,0.6)', 'rgba(255,152,0,0.6)'],
+        borderRadius: 6
+      }]
+    },
+    options: { ...chartOptions(), plugins: { legend: { display: false } } }
+  });
+
+  // First serve %
+  destroyChart('chartFirstServe');
+  const ctxFS = document.getElementById('chartFirstServe').getContext('2d');
+  dashCharts['chartFirstServe'] = new Chart(ctxFS, {
+    type: 'line',
+    data: {
+      labels: recent.map(m => formatDateShort(m.date)),
+      datasets: [
+        {
+          label: db.players[0]?.name || 'P1',
+          data: recent.map(m => {
+            const s = m.stats?.p1 || {};
+            const tot = (s.firstServeIn||0) + (s.secondServe||0) + (s.doubleFaults||0);
+            return tot > 0 ? Math.round(s.firstServeIn/tot*100) : 0;
+          }),
+          borderColor: '#00e676', backgroundColor: 'rgba(0,230,118,0.1)', tension: 0.4, fill: true
+        },
+        {
+          label: db.players[1]?.name || 'P2',
+          data: recent.map(m => {
+            const s = m.stats?.p2 || {};
+            const tot = (s.firstServeIn||0) + (s.secondServe||0) + (s.doubleFaults||0);
+            return tot > 0 ? Math.round(s.firstServeIn/tot*100) : 0;
+          }),
+          borderColor: '#448aff', backgroundColor: 'rgba(68,138,255,0.1)', tension: 0.4, fill: true
+        }
+      ]
+    },
+    options: { ...chartOptions(), scales: { y: { ...chartOptions().scales.y, min: 0, max: 100 } } }
+  });
+
+  // Results
+  destroyChart('chartResults');
+  const ctxR = document.getElementById('chartResults').getContext('2d');
+  if (db.players.length >= 2) {
+    const p1 = db.players[0], p2 = db.players[1];
+    const w1 = matches.filter(m => m.winnerId === p1.id).length;
+    const w2 = matches.filter(m => m.winnerId === p2.id).length;
+    dashCharts['chartResults'] = new Chart(ctxR, {
+      type: 'doughnut',
+      data: {
+        labels: [p1.name, p2.name, 'Sin resultado'],
+        datasets: [{
+          data: [w1, w2, matches.length - w1 - w2],
+          backgroundColor: ['rgba(0,230,118,0.7)', 'rgba(68,138,255,0.7)', 'rgba(74,85,104,0.4)'],
+          borderWidth: 0
+        }]
+      },
+      options: { ...chartOptions(), cutout: '65%' }
+    });
+  }
+}
+
+function destroyChart(id) {
+  if (dashCharts[id]) { dashCharts[id].destroy(); delete dashCharts[id]; }
+}
+
+function chartOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        labels: { color: '#8892a4', font: { size: 11 }, boxWidth: 12 }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8892a4', font: { size: 10 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8892a4', font: { size: 10 } } }
+    }
+  };
+}
+
+function renderCoachSummary(matches) {
+  if (!matches.length) {
+    document.getElementById('coachSummaryText').textContent = 'Registra partidos para ver un resumen automático de rendimiento.';
+    return;
+  }
+
+  const lines = [];
+  db.players.forEach(player => {
+    const pm = matches.filter(m => m.p1 === player.id || m.p2 === player.id);
+    if (!pm.length) return;
+    const wins = pm.filter(m => m.winnerId === player.id).length;
+    const avgUFE = (pm.reduce((a,m) => {
+      const side = m.p1 === player.id ? 'p1' : 'p2';
+      return a + ((m.stats?.[side]||{}).ufe||0);
+    }, 0) / pm.length).toFixed(1);
+    const avgAces = (pm.reduce((a,m) => {
+      const side = m.p1 === player.id ? 'p1' : 'p2';
+      return a + ((m.stats?.[side]||{}).aces||0);
+    }, 0) / pm.length).toFixed(1);
+    lines.push(`${player.name}: ${wins}/${pm.length} victorias · Media ${avgUFE} errores NF · Media ${avgAces} aces por partido.`);
+  });
+
+  // Pattern: if any player has >15 avg UFE
+  db.players.forEach(player => {
+    const pm = matches.filter(m => m.p1 === player.id || m.p2 === player.id);
+    if (!pm.length) return;
+    const avgUFE = pm.reduce((a,m) => {
+      const side = m.p1 === player.id ? 'p1' : 'p2';
+      return a + ((m.stats?.[side]||{}).ufe||0);
+    }, 0) / pm.length;
+    if (avgUFE > 15) lines.push(`⚠ ${player.name} acumula una media alta de errores no forzados (${avgUFE.toFixed(1)}/partido). Recomendación: trabajar la consistencia en peloteos.`);
+  });
+
+  document.getElementById('coachSummaryText').innerHTML = lines.map(l => `<p style="margin-bottom:8px;">${l}</p>`).join('');
+}
+
+// ============================================================
+// PLAYERS
+// ============================================================
+function openPlayerModal(id) {
+  const modal = document.getElementById('playerModal');
+  if (id) {
+    const p = getPlayer(id);
+    document.getElementById('playerModalTitle').textContent = 'Editar Jugador';
+    document.getElementById('pm-id').value = p.id;
+    document.getElementById('pm-name').value = p.name || '';
+    document.getElementById('pm-age').value = p.age || '';
+    document.getElementById('pm-hand').value = p.hand || 'right';
+    document.getElementById('pm-backhand').value = p.backhand || 'two';
+    document.getElementById('pm-level').value = p.level || 'intermediate';
+    document.getElementById('pm-email').value = p.email || '';
+    document.getElementById('pm-strengths').value = p.strengths || '';
+    document.getElementById('pm-weaknesses').value = p.weaknesses || '';
+    document.getElementById('pm-goals').value = p.goals || '';
+    document.getElementById('pm-notes').value = p.notes || '';
+  } else {
+    document.getElementById('playerModalTitle').textContent = 'Nuevo Jugador';
+    document.getElementById('pm-id').value = '';
+    ['pm-name','pm-age','pm-email','pm-strengths','pm-weaknesses','pm-goals','pm-notes'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('pm-hand').value = 'right';
+    document.getElementById('pm-backhand').value = 'two';
+    document.getElementById('pm-level').value = 'intermediate';
+  }
+  openModal('playerModal');
+}
+
+function savePlayer() {
+  const name = document.getElementById('pm-name').value.trim();
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+
+  const id = document.getElementById('pm-id').value;
+  const player = {
+    id: id || uid(),
+    name,
+    age: parseInt(document.getElementById('pm-age').value) || null,
+    hand: document.getElementById('pm-hand').value,
+    backhand: document.getElementById('pm-backhand').value,
+    level: document.getElementById('pm-level').value,
+    email: document.getElementById('pm-email').value,
+    strengths: document.getElementById('pm-strengths').value,
+    weaknesses: document.getElementById('pm-weaknesses').value,
+    goals: document.getElementById('pm-goals').value,
+    notes: document.getElementById('pm-notes').value,
+    createdAt: id ? (getPlayer(id)?.createdAt || new Date().toISOString()) : new Date().toISOString()
+  };
+
+  if (id) {
+    const idx = db.players.findIndex(p => p.id === id);
+    if (idx > -1) db.players[idx] = player;
+  } else {
+    db.players.push(player);
+  }
+
+  saveData();
+  closeModal('playerModal');
+  renderPlayers();
+  showToast('Jugador guardado ✓');
+}
+
+function deletePlayer(id) {
+  if (!confirm('¿Eliminar este jugador? Esta acción no se puede deshacer.')) return;
+  db.players = db.players.filter(p => p.id !== id);
+  saveData();
+  renderPlayers();
+}
+
+function renderPlayers() {
+  const grid = document.getElementById('playersGrid');
+  if (!db.players.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-state-icon">👤</div>
+      <div class="empty-state-title">Sin jugadores</div>
+      <div class="empty-state-text">Crea tu primer jugador para empezar</div>
+      <button class="btn btn-primary" onclick="openPlayerModal()">+ Añadir Jugador</button>
+    </div>`;
+    return;
+  }
+
+  const colors = ['#00e676','#448aff','#ff9800','#ce93d8','#ff5252','#80cbc4'];
+  grid.innerHTML = db.players.map((p, i) => {
+    const color = colors[i % colors.length];
+    const matches = db.matches.filter(m => (m.p1 === p.id || m.p2 === p.id) && m.status === 'finished');
+    const wins = matches.filter(m => m.winnerId === p.id).length;
+    const levelLabels = { beginner:'Iniciación', intermediate:'Intermedio', advanced:'Avanzado', competitive:'Competitivo', professional:'Profesional' };
+    const handLabel = p.hand === 'right' ? 'Diestro' : p.hand === 'left' ? 'Zurdo' : 'Ambidiestro';
+    return `<div class="player-card">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="player-avatar" style="background:${color}22;color:${color};">${p.name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="player-name">${p.name}</div>
+          <div class="player-meta">${p.age ? p.age + ' años · ' : ''}${handLabel} · ${levelLabels[p.level]||p.level}</div>
+        </div>
+      </div>
+      <div class="stat-row"><span class="stat-label">Partidos</span><span class="stat-value">${matches.length}</span></div>
+      <div class="stat-row"><span class="stat-label">Victorias</span><span class="stat-value" style="color:var(--accent-green);">${wins}</span></div>
+      <div class="stat-row"><span class="stat-label">% Victorias</span><span class="stat-value">${matches.length ? Math.round(wins/matches.length*100)+'%' : '—'}</span></div>
+      ${p.strengths ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-green);">💪 </span>${p.strengths}</div>` : ''}
+      ${p.weaknesses ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-red);">⚠ </span>${p.weaknesses}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-secondary btn-sm" onclick="openPlayerDetail('${p.id}')">👁 Ver</button>
+        <button class="btn btn-secondary btn-sm" onclick="openPlayerModal('${p.id}')">✏ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPlayerDetail(id) {
+  const p = getPlayer(id);
+  if (!p) return;
+  const matches = db.matches.filter(m => (m.p1 === id || m.p2 === id) && m.status === 'finished');
+  const wins = matches.filter(m => m.winnerId === id).length;
+  const avgUFE = matches.length ? (matches.reduce((a,m) => { const s=m.p1===id?'p1':'p2'; return a+((m.stats?.[s]||{}).ufe||0); }, 0)/matches.length).toFixed(1) : '—';
+  const avgWinners = matches.length ? (matches.reduce((a,m) => { const s=m.p1===id?'p1':'p2'; return a+((m.stats?.[s]||{}).winners||0); }, 0)/matches.length).toFixed(1) : '—';
+  const avgAces = matches.length ? (matches.reduce((a,m) => { const s=m.p1===id?'p1':'p2'; return a+((m.stats?.[s]||{}).aces||0); }, 0)/matches.length).toFixed(1) : '—';
+
+  document.getElementById('playerDetailContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div class="player-avatar" style="background:rgba(0,230,118,0.1);color:var(--accent-green);width:64px;height:64px;font-size:28px;">${p.name.charAt(0)}</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;">${p.name}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${p.age ? p.age + ' años · ' : ''}${p.hand==='right'?'Diestro':'Zurdo'} · ${p.level}</div>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="card"><div class="card-title">Partidos</div><div class="card-value">${matches.length}</div></div>
+      <div class="card"><div class="card-title">Victorias</div><div class="card-value" style="color:var(--accent-green);">${wins}</div></div>
+      <div class="card"><div class="card-title">% Victoria</div><div class="card-value">${matches.length ? Math.round(wins/matches.length*100)+'%' : '—'}</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Estadísticas medias por partido</div>
+      <div class="stat-row"><span class="stat-label">Errores no forzados</span><span class="stat-value">${avgUFE}</span></div>
+      <div class="stat-row"><span class="stat-label">Winners</span><span class="stat-value">${avgWinners}</span></div>
+      <div class="stat-row"><span class="stat-label">Aces</span><span class="stat-value">${avgAces}</span></div>
+    </div>
+    ${p.strengths || p.weaknesses || p.goals ? `<div class="card" style="margin-bottom:16px;">
+      ${p.strengths ? `<div style="margin-bottom:8px;"><span style="color:var(--accent-green);font-weight:600;">💪 Fortalezas:</span> <span style="font-size:13px;color:var(--text-secondary);">${p.strengths}</span></div>` : ''}
+      ${p.weaknesses ? `<div style="margin-bottom:8px;"><span style="color:var(--accent-red);font-weight:600;">⚠ Debilidades:</span> <span style="font-size:13px;color:var(--text-secondary);">${p.weaknesses}</span></div>` : ''}
+      ${p.goals ? `<div><span style="color:var(--accent-blue);font-weight:600;">🎯 Objetivos:</span> <span style="font-size:13px;color:var(--text-secondary);">${p.goals}</span></div>` : ''}
+    </div>` : ''}
+    ${p.notes ? `<div class="card"><div class="card-title">Notas del coach</div><p style="font-size:13px;color:var(--text-secondary);">${p.notes}</p></div>` : ''}
+  `;
+  openModal('playerDetailModal');
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+function openCalendarMatchModal(id) {
+  populatePlayerSelects();
+  const today = new Date().toISOString().split('T')[0];
+  if (id) {
+    const m = db.matches.find(x => x.id === id);
+    document.getElementById('cal-id').value = m.id;
+    document.getElementById('cal-date').value = m.date || today;
+    document.getElementById('cal-time').value = m.time || '';
+    document.getElementById('cal-p1').value = m.p1 || '';
+    document.getElementById('cal-p2').value = m.p2 || '';
+    document.getElementById('cal-place').value = m.place || '';
+    document.getElementById('cal-surface').value = m.surface || 'hard';
+    document.getElementById('cal-type').value = m.matchType || 'training';
+    document.getElementById('cal-notes').value = m.preNotes || '';
+  } else {
+    document.getElementById('cal-id').value = '';
+    document.getElementById('cal-date').value = today;
+    document.getElementById('cal-time').value = '';
+    document.getElementById('cal-p1').value = '';
+    document.getElementById('cal-p2').value = '';
+    document.getElementById('cal-place').value = '';
+    document.getElementById('cal-surface').value = 'hard';
+    document.getElementById('cal-type').value = 'training';
+    document.getElementById('cal-notes').value = '';
+  }
+  openModal('calendarModal');
+}
+
+function saveCalendarMatch() {
+  const date = document.getElementById('cal-date').value;
+  const p1 = document.getElementById('cal-p1').value;
+  const p2 = document.getElementById('cal-p2').value;
+  if (!date || !p1 || !p2) { showToast('Fecha y jugadores son obligatorios', 'error'); return; }
+  if (p1 === p2) { showToast('Los jugadores deben ser diferentes', 'error'); return; }
+
+  const id = document.getElementById('cal-id').value;
+  const match = {
+    id: id || uid(),
+    date,
+    time: document.getElementById('cal-time').value,
+    p1,
+    p2,
+    place: document.getElementById('cal-place').value,
+    surface: document.getElementById('cal-surface').value,
+    matchType: document.getElementById('cal-type').value,
+    preNotes: document.getElementById('cal-notes').value,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+
+  if (id) {
+    const idx = db.matches.findIndex(m => m.id === id);
+    if (idx > -1) { match.status = db.matches[idx].status; db.matches[idx] = match; }
+  } else {
+    db.matches.push(match);
+  }
+
+  saveData();
+  closeModal('calendarModal');
+  renderCalendar();
+  showToast('Partido programado ✓');
+}
+
+function renderCalendar() {
+  const filter = document.getElementById('calFilter')?.value || 'all';
+  let matches = [...db.matches];
+  if (filter !== 'all') matches = matches.filter(m => m.status === filter);
+  matches.sort((a,b) => new Date(a.date)-new Date(b.date));
+
+  const list = document.getElementById('calendarList');
+  if (!matches.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📅</div>
+      <div class="empty-state-title">Sin partidos programados</div>
+      <div class="empty-state-text">Añade partidos al calendario o importa un CSV</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = matches.map(m => {
+    const d = new Date(m.date);
+    const p1n = playerName(m.p1) || m.p1Name || '?';
+    const p2n = playerName(m.p2) || m.p2Name || '?';
+    return `<div class="match-card">
+      <div class="match-date-block">
+        <div class="match-day">${d.getDate()}</div>
+        <div class="match-month">${d.toLocaleDateString('es-ES',{month:'short'})}</div>
+      </div>
+      <div class="match-info">
+        <div class="match-players">${p1n} vs ${p2n}</div>
+        <div class="match-details">${m.time||''} ${m.place?'· '+m.place:''} · ${surfaceLabel(m.surface)} · ${typeLabel(m.matchType)}</div>
+        ${m.preNotes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${m.preNotes}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        ${statusBadge(m.status)}
+        <div style="display:flex;gap:6px;">
+          ${m.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="startMatchFromCalendar('${m.id}')">▶ Iniciar</button>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="openCalendarMatchModal('${m.id}')">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCalendarMatch('${m.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteCalendarMatch(id) {
+  if (!confirm('¿Eliminar este partido del calendario?')) return;
+  db.matches = db.matches.filter(m => m.id !== id);
+  saveData();
+  renderCalendar();
+}
+
+function startMatchFromCalendar(id) {
+  const m = db.matches.find(x => x.id === id);
+  if (!m) return;
+  currentMatch = { ...m, status: 'playing', startTime: new Date().toISOString(), format: 'bo3', objectives: [] };
+  m.status = 'playing';
+  liveScore = { sets: [], currentSet: { p1: 0, p2: 0 }, currentGame: { p1: 0, p2: 0 }, setNumber: 1, gameNumber: 1, isTieBreak: false };
+  selectedServer = 1;
+  saveLiveState();
+  saveData();
+  document.getElementById('liveIndicator').style.display = 'flex';
+  navigate('live');
+}
+
+function downloadCSVTemplate() {
+  const csv = 'fecha,hora,jugador1,jugador2,lugar,tipo_pista,tipo_partido,notas\n2026-06-01,18:00,Ana García,Laura Martínez,Club Tenis Madrid,tierra,entrenamiento,Trabajar primer saque';
+  downloadFile('plantilla_calendario.csv', csv, 'text/csv');
+}
+
+// ============================================================
+// NEW MATCH
+// ============================================================
+function createMatchAndTrack() {
+  const p1 = document.getElementById('nm-p1').value;
+  const p2 = document.getElementById('nm-p2').value;
+  if (!p1 || !p2) { showToast('Selecciona ambos jugadores', 'error'); return; }
+  if (p1 === p2) { showToast('Los jugadores deben ser diferentes', 'error'); return; }
+
+  const objectives = Array.from(document.querySelectorAll('#nm-objectives input:checked')).map(i => i.value);
+
+  currentMatch = {
+    id: uid(),
+    p1, p2,
+    date: document.getElementById('nm-date').value || new Date().toISOString().split('T')[0],
+    time: document.getElementById('nm-time').value,
+    place: document.getElementById('nm-place').value,
+    surface: document.getElementById('nm-surface').value,
+    matchType: document.getElementById('nm-type').value,
+    format: document.getElementById('nm-format').value,
+    preNotes: document.getElementById('nm-notes').value,
+    objectives,
+    status: 'playing',
+    startTime: new Date().toISOString()
+  };
+
+  db.matches.push(currentMatch);
+  liveScore = { sets: [], currentSet: { p1: 0, p2: 0 }, currentGame: { p1: 0, p2: 0 }, setNumber: 1, gameNumber: 1, isTieBreak: false };
+  selectedServer = 1;
+  saveLiveState();
+  saveData();
+  document.getElementById('liveIndicator').style.display = 'flex';
+  navigate('live');
+}
+
+function createMatchOnly() {
+  const p1 = document.getElementById('nm-p1').value;
+  const p2 = document.getElementById('nm-p2').value;
+  if (!p1 || !p2) { showToast('Selecciona ambos jugadores', 'error'); return; }
+  if (p1 === p2) { showToast('Los jugadores deben ser diferentes', 'error'); return; }
+
+  const match = {
+    id: uid(),
+    p1, p2,
+    date: document.getElementById('nm-date').value,
+    time: document.getElementById('nm-time').value,
+    place: document.getElementById('nm-place').value,
+    surface: document.getElementById('nm-surface').value,
+    matchType: document.getElementById('nm-type').value,
+    format: document.getElementById('nm-format').value,
+    preNotes: document.getElementById('nm-notes').value,
+    objectives: Array.from(document.querySelectorAll('#nm-objectives input:checked')).map(i => i.value),
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+
+  db.matches.push(match);
+  saveData();
+  showToast('Partido guardado en el calendario ✓');
+  navigate('calendar');
+}
+
+// ============================================================
+// LIVE TRACKING
+// ============================================================
+function renderLiveSection() {
+  if (!currentMatch) {
+    document.getElementById('noMatchWarning').style.display = 'block';
+    document.getElementById('liveMatchContent').style.display = 'none';
+    return;
+  }
+  document.getElementById('noMatchWarning').style.display = 'none';
+  document.getElementById('liveMatchContent').style.display = 'block';
+
+  // Update player names in selectors
+  const p1n = playerName(currentMatch.p1);
+  const p2n = playerName(currentMatch.p2);
+  document.getElementById('selectP1Btn').textContent = '🟢 ' + p1n;
+  document.getElementById('selectP2Btn').textContent = p2n + ' 🔵';
+  document.getElementById('serverP1Btn').textContent = p1n + ' saca';
+  document.getElementById('serverP2Btn').textContent = p2n + ' saca';
+
+  renderLiveScoreboard();
+  renderLiveStats();
+  renderEventsLog();
+  updateServerIndicator();
+  populatePlayerSelects(); // for finish modal
+}
+
+function renderLiveScoreboard() {
+  if (!currentMatch) return;
+  const p1n = playerName(currentMatch.p1);
+  const p2n = playerName(currentMatch.p2);
+  document.getElementById('live-p1-name').textContent = p1n;
+  document.getElementById('live-p2-name').textContent = p2n;
+
+  // Score display
+  const pts = ['0','15','30','40'];
+  let g1 = liveScore.currentGame.p1;
+  let g2 = liveScore.currentGame.p2;
+  let display, context = '';
+
+  if (!liveScore.isTieBreak) {
+    if (g1 >= 3 && g2 >= 3) {
+      if (g1 === g2) { display = 'DEUCE'; context = 'DEUCE'; }
+      else if (g1 > g2) { display = 'ADV P1'; context = 'VENTAJA ' + p1n; }
+      else { display = 'ADV P2'; context = 'VENTAJA ' + p2n; }
+    } else {
+      display = (pts[g1]||g1) + ' - ' + (pts[g2]||g2);
+      context = 'Puntos';
+    }
+  } else {
+    display = g1 + ' - ' + g2;
+    context = 'TIE-BREAK';
+  }
+
+  document.getElementById('live-score-display').textContent = display;
+  document.getElementById('live-score-context').textContent = context;
+  document.getElementById('live-game-info').textContent = `Juego ${liveScore.gameNumber} · Set ${liveScore.setNumber}`;
+
+  // Sets display
+  const renderSets = (player, sets) => {
+    const el = document.getElementById(`live-${player}-sets`);
+    el.innerHTML = sets.map((s, i) => {
+      const myGames = player === 'p1' ? s.p1 : s.p2;
+      const oppGames = player === 'p1' ? s.p2 : s.p1;
+      const won = myGames > oppGames;
+      return `<div class="score-set-badge ${won?'won':''}">${myGames}</div>`;
+    }).join('') + (liveScore.sets.length < 3 ? `<div class="score-set-badge">${player==='p1'?liveScore.currentSet.p1:liveScore.currentSet.p2}</div>` : '');
+  };
+  renderSets('p1', liveScore.sets);
+  renderSets('p2', liveScore.sets);
+}
+
+function updateServerIndicator() {
+  const p1serve = document.getElementById('serve-p1');
+  const p2serve = document.getElementById('serve-p2');
+  const p1label = document.getElementById('serve-p1-label');
+  const p2label = document.getElementById('serve-p2-label');
+  if (selectedServer === 1) {
+    p1serve.style.display = 'inline-block'; p1label.textContent = 'Saca';
+    p2serve.style.display = 'none'; p2label.textContent = '';
+  } else {
+    p2serve.style.display = 'inline-block'; p2label.textContent = 'Saca';
+    p1serve.style.display = 'none'; p1label.textContent = '';
+  }
+
+  // Update server buttons state
+  document.getElementById('serverP1Btn').classList.toggle('selected', selectedServer === 1);
+  document.getElementById('serverP2Btn').classList.toggle('selected', selectedServer === 2);
+}
+
+function selectPointWinner(player) {
+  selectedPointWinner = player;
+  document.getElementById('selectP1Btn').classList.toggle('selected', player === 1);
+  document.getElementById('selectP2Btn').classList.toggle('selected', player === 2);
+}
+
+function selectServer(player) {
+  selectedServer = player;
+  updateServerIndicator();
+}
+
+function quickEvent(type) {
+  if (!selectedPointWinner) { showToast('Selecciona primero quién ganó el punto', 'error'); return; }
+
+  const typeMap = {
+    ace: { type: 'ace', shot: 'serve', context: 'normal' },
+    double_fault: { type: 'double_fault', shot: 'serve', context: 'normal' },
+    winner_fh: { type: 'winner', shot: 'forehand', context: 'normal' },
+    winner_bh: { type: 'winner', shot: 'backhand', context: 'normal' },
+    ufe_fh: { type: 'ufe', shot: 'forehand', context: 'normal' },
+    ufe_bh: { type: 'ufe', shot: 'backhand', context: 'normal' },
+    return_winner: { type: 'return_winner', shot: 'return', context: 'normal' },
+    return_error: { type: 'return_error', shot: 'return', context: 'normal' },
+    net_point: { type: 'net_winner', shot: 'volley', context: 'normal' },
+    rally_won: { type: 'rally_long', shot: 'forehand', context: 'normal' },
+    rally_lost: { type: 'rally_long', shot: 'forehand', context: 'normal' },
+    forced_error: { type: 'forced_error', shot: 'forehand', context: 'normal' }
+  };
+
+  const ev = typeMap[type] || {};
+  registerEvent({ ...ev, winner: selectedPointWinner, server: selectedServer });
+  selectedPointWinner = null;
+  document.getElementById('selectP1Btn').classList.remove('selected');
+  document.getElementById('selectP2Btn').classList.remove('selected');
+}
+
+function registerPoint() {
+  if (!selectedPointWinner) { showToast('Selecciona quién ganó el punto', 'error'); return; }
+
+  registerEvent({
+    type: document.getElementById('ev-type').value,
+    shot: document.getElementById('ev-shot').value,
+    zone: document.getElementById('ev-zone').value,
+    context: document.getElementById('ev-context').value,
+    duration: document.getElementById('ev-duration').value,
+    note: document.getElementById('ev-note').value,
+    winner: selectedPointWinner,
+    server: selectedServer
+  });
+
+  document.getElementById('ev-note').value = '';
+  selectedPointWinner = null;
+  document.getElementById('selectP1Btn').classList.remove('selected');
+  document.getElementById('selectP2Btn').classList.remove('selected');
+}
+
+function registerEvent(data) {
+  if (!currentMatch) return;
+
+  const event = {
+    id: uid(),
+    matchId: currentMatch.id,
+    timestamp: new Date().toISOString(),
+    setNumber: liveScore.setNumber,
+    gameNumber: liveScore.gameNumber,
+    pointBefore: { p1: liveScore.currentGame.p1, p2: liveScore.currentGame.p2 },
+    winner: data.winner, // 1 or 2
+    server: data.server || selectedServer,
+    type: data.type,
+    shot: data.shot,
+    zone: data.zone,
+    context: data.context,
+    duration: data.duration,
+    note: data.note
+  };
+
+  db.events.push(event);
+
+  // Update score
+  advanceScore(data.winner, data.type);
+  saveLiveState();
+  saveData();
+
+  renderLiveScoreboard();
+  renderLiveStats();
+  renderEventsLog();
+  showToast('Punto registrado ✓', 'success');
+}
+
+function advanceScore(winner, type) {
+  // Advance game points
+  const g = liveScore.currentGame;
+  const side = winner === 1 ? 'p1' : 'p2';
+  const oppSide = winner === 1 ? 'p2' : 'p1';
+
+  if (liveScore.isTieBreak) {
+    g[side]++;
+    // Check tiebreak win
+    if (g[side] >= 7 && g[side] - g[oppSide] >= 2) {
+      // Win tiebreak = win set
+      liveScore.currentSet[side]++;
+      liveScore.sets.push({ p1: liveScore.currentSet.p1, p2: liveScore.currentSet.p2 });
+      liveScore.currentSet = { p1: 0, p2: 0 };
+      liveScore.currentGame = { p1: 0, p2: 0 };
+      liveScore.isTieBreak = false;
+      liveScore.setNumber++;
+      liveScore.gameNumber = 1;
+      selectedServer = selectedServer === 1 ? 2 : 1;
+      updateServerIndicator();
+    }
+    return;
+  }
+
+  g[side]++;
+  // Deuce/Advantage logic
+  if (g.p1 >= 3 && g.p2 >= 3) {
+    if (g[side] - g[oppSide] >= 2) {
+      // Win game
+      winGame(winner);
+    }
+    // else continue
+  } else if (g[side] >= 4) {
+    winGame(winner);
+  }
+}
+
+function winGame(winner) {
+  const side = winner === 1 ? 'p1' : 'p2';
+  const oppSide = winner === 1 ? 'p2' : 'p1';
+  liveScore.currentSet[side]++;
+  liveScore.gameNumber++;
+  liveScore.currentGame = { p1: 0, p2: 0 };
+  selectedServer = selectedServer === 1 ? 2 : 1;
+  updateServerIndicator();
+
+  // Check set win (6-x with 2 game lead, or 7-5, or tiebreak)
+  const myGames = liveScore.currentSet[side];
+  const oppGames = liveScore.currentSet[oppSide];
+
+  if ((myGames >= 6 && myGames - oppGames >= 2) || myGames === 7) {
+    // Win set
+    liveScore.sets.push({ p1: liveScore.currentSet.p1, p2: liveScore.currentSet.p2 });
+    liveScore.currentSet = { p1: 0, p2: 0 };
+    liveScore.setNumber++;
+    liveScore.gameNumber = 1;
+  } else if (myGames === 6 && oppGames === 6) {
+    // Tiebreak
+    liveScore.isTieBreak = true;
+  }
+}
+
+function undoLastEvent() {
+  if (!currentMatch) return;
+  const matchEvents = db.events.filter(e => e.matchId === currentMatch.id);
+  if (!matchEvents.length) { showToast('No hay eventos para deshacer', 'error'); return; }
+
+  // Remove last event
+  const lastEv = matchEvents[matchEvents.length - 1];
+  db.events = db.events.filter(e => e.id !== lastEv.id);
+
+  // Rebuild score from events
+  rebuildScore();
+  saveLiveState();
+  saveData();
+  renderLiveScoreboard();
+  renderLiveStats();
+  renderEventsLog();
+  showToast('Evento deshecho ✓');
+}
+
+function rebuildScore() {
+  liveScore = { sets: [], currentSet: { p1: 0, p2: 0 }, currentGame: { p1: 0, p2: 0 }, setNumber: 1, gameNumber: 1, isTieBreak: false };
+  selectedServer = 1;
+  const matchEvents = db.events.filter(e => e.matchId === currentMatch.id);
+  matchEvents.forEach(ev => advanceScore(ev.winner, ev.type));
+}
+
+function renderEventsLog() {
+  if (!currentMatch) return;
+  const matchEvents = db.events.filter(e => e.matchId === currentMatch.id);
+  const container = document.getElementById('liveEventsLog');
+  if (!matchEvents.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px 0;">Los eventos aparecerán aquí...</div>';
+    return;
+  }
+  const p1n = playerName(currentMatch.p1);
+  const p2n = playerName(currentMatch.p2);
+  const recent = [...matchEvents].reverse().slice(0, 15);
+  container.innerHTML = recent.map(ev => {
+    const winnerName = ev.winner === 1 ? p1n : p2n;
+    const cls = ev.winner === 1 ? 'event-log-p1' : 'event-log-p2';
+    const typeLabels = { ace:'Ace', double_fault:'Doble falta', winner:'Winner', ufe:'Error NF', forced_error:'Error forzado', net_winner:'Punto red', return_winner:'Resto ganador', return_error:'Resto fallado', rally_long:'Rally largo', rally_medium:'Rally medio', rally_short:'Rally corto' };
+    const shotLabels = { serve:'Saque', return:'Resto', forehand:'DH', backhand:'RV', volley:'Volea', smash:'Smash', dropshot:'Dejada', lob:'Globo' };
+    return `<div class="event-log-item ${cls}">
+      <span style="font-weight:700;">${winnerName}</span>
+      <span>${typeLabels[ev.type]||ev.type} · ${shotLabels[ev.shot]||ev.shot||''}</span>
+      <span style="color:var(--text-muted);font-size:10px;">S${ev.setNumber}·J${ev.gameNumber}</span>
+      ${ev.note ? `<span style="color:var(--text-muted);font-size:10px;">"${ev.note}"</span>` : ''}
+    </div>`;
+  }).join('');
+  container.scrollTop = 0;
+}
+
+function renderLiveStats() {
+  if (!currentMatch) return;
+  const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+  const p1n = playerName(currentMatch.p1);
+  const p2n = playerName(currentMatch.p2);
+
+  document.getElementById('liveStatsContainer').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-size:12px;">
+      <div style="text-align:right;font-weight:700;color:var(--accent-green);">${p1n}</div>
+      <div></div>
+      <div style="font-weight:700;color:var(--accent-blue);">${p2n}</div>
+    </div>
+    ${statRow('Aces', stats.p1.aces, stats.p2.aces)}
+    ${statRow('Dobles faltas', stats.p1.doubleFaults, stats.p2.doubleFaults, true)}
+    ${statRow('Winners', stats.p1.winners, stats.p2.winners)}
+    ${statRow('Errores NF', stats.p1.ufe, stats.p2.ufe, true)}
+    ${statRow('Puntos en red', stats.p1.netPoints, stats.p2.netPoints)}
+  `;
+}
+
+function statRow(label, v1, v2, lowerBetter=false) {
+  const good = lowerBetter ? v1 < v2 : v1 > v2;
+  const bad = lowerBetter ? v1 > v2 : v1 < v2;
+  return `<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:4px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);">
+    <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-weight:600;color:${good?'var(--accent-green)':bad?'var(--accent-red)':'var(--text-primary)'};">${v1}</div>
+    <div style="text-align:center;font-size:10px;color:var(--text-muted);padding:0 6px;">${label}</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${bad?'var(--accent-green)':good?'var(--accent-red)':'var(--text-primary)'};">${v2}</div>
+  </div>`;
+}
+
+function finishMatch() {
+  if (!currentMatch) return;
+  populatePlayerSelects();
+  document.getElementById('fm-result').value = '';
+  document.getElementById('fm-notes').value = '';
+  document.getElementById('fm-winner').value = '';
+  openModal('finishMatchModal');
+}
+
+function confirmFinishMatch() {
+  if (!currentMatch) return;
+  const result = document.getElementById('fm-result').value;
+  const winnerId = document.getElementById('fm-winner').value || null;
+  const notes = document.getElementById('fm-notes').value;
+
+  const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+
+  // Update match in db
+  const idx = db.matches.findIndex(m => m.id === currentMatch.id);
+  if (idx > -1) {
+    db.matches[idx] = {
+      ...currentMatch,
+      status: 'finished',
+      result,
+      winnerId,
+      postNotes: notes,
+      stats,
+      endTime: new Date().toISOString()
+    };
+  }
+
+  clearLiveState();
+  currentMatch = null;
+  document.getElementById('liveIndicator').style.display = 'none';
+  saveData();
+  closeModal('finishMatchModal');
+  showToast('Partido finalizado ✓');
+  navigate('history');
+}
+
+// ============================================================
+// STATS CALCULATION
+// ============================================================
+function calculateMatchStats(matchId, p1Id, p2Id) {
+  const events = db.events.filter(e => e.matchId === matchId);
+
+  const initStats = () => ({
+    aces: 0, doubleFaults: 0, winners: 0, ufe: 0, forcedErrors: 0,
+    netPoints: 0, returnWinners: 0, returnErrors: 0,
+    firstServeIn: 0, secondServe: 0,
+    ralliesShort: 0, ralliesMedium: 0, ralliesLong: 0,
+    pointsWon: 0, bigPointsWon: 0, bigPointsTotal: 0,
+    forehandErrors: 0, backhandErrors: 0, forehandWinners: 0, backhandWinners: 0
+  });
+
+  const p1 = initStats(), p2 = initStats();
+
+  events.forEach(ev => {
+    const winnerStats = ev.winner === 1 ? p1 : p2;
+    const loserStats = ev.winner === 1 ? p2 : p1;
+    const serverStats = ev.server === 1 ? p1 : p2;
+
+    winnerStats.pointsWon++;
+    const isBigPoint = ['breakpoint','setpoint','matchpoint','deuce','advantage'].includes(ev.context);
+    if (isBigPoint) { winnerStats.bigPointsWon++; winnerStats.bigPointsTotal++; loserStats.bigPointsTotal++; }
+
+    switch(ev.type) {
+      case 'ace': winnerStats.aces++; serverStats.firstServeIn++; break;
+      case 'double_fault': loserStats.doubleFaults++; break;
+      case 'winner': winnerStats.winners++;
+        if (ev.shot === 'forehand') winnerStats.forehandWinners++;
+        if (ev.shot === 'backhand') winnerStats.backhandWinners++;
+        break;
+      case 'ufe': loserStats.ufe++;
+        if (ev.shot === 'forehand') loserStats.forehandErrors++;
+        if (ev.shot === 'backhand') loserStats.backhandErrors++;
+        break;
+      case 'forced_error': loserStats.forcedErrors++; break;
+      case 'net_winner': winnerStats.netPoints++; break;
+      case 'return_winner': winnerStats.returnWinners++; break;
+      case 'return_error': loserStats.returnErrors++; break;
+      case 'rally_short': winnerStats.ralliesShort++; break;
+      case 'rally_medium': winnerStats.ralliesMedium++; break;
+      case 'rally_long': winnerStats.ralliesLong++; break;
+    }
+  });
+
+  return { p1, p2 };
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function populateHistoryFilters() {
+  populatePlayerSelects();
+}
+
+function clearHistoryFilters() {
+  document.getElementById('hf-player').value = '';
+  document.getElementById('hf-surface').value = '';
+  document.getElementById('hf-type').value = '';
+  document.getElementById('hf-from').value = '';
+  document.getElementById('hf-to').value = '';
+  renderHistory();
+}
+
+function renderHistory() {
+  let matches = db.matches.filter(m => m.status === 'finished');
+
+  const player = document.getElementById('hf-player')?.value;
+  const surface = document.getElementById('hf-surface')?.value;
+  const type = document.getElementById('hf-type')?.value;
+  const from = document.getElementById('hf-from')?.value;
+  const to = document.getElementById('hf-to')?.value;
+
+  if (player) matches = matches.filter(m => m.p1 === player || m.p2 === player);
+  if (surface) matches = matches.filter(m => m.surface === surface);
+  if (type) matches = matches.filter(m => m.matchType === type);
+  if (from) matches = matches.filter(m => m.date >= from);
+  if (to) matches = matches.filter(m => m.date <= to);
+
+  matches.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  const container = document.getElementById('historyTable');
+
+  if (!matches.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-title">Sin partidos</div>
+      <div class="empty-state-text">No hay partidos que coincidan con los filtros</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `<table>
+    <thead><tr>
+      <th>Fecha</th>
+      <th>Jugadores</th>
+      <th>Resultado</th>
+      <th>Ganador</th>
+      <th>Superficie</th>
+      <th>Tipo</th>
+      <th>ENF P1</th>
+      <th>ENF P2</th>
+      <th>Win P1</th>
+      <th>Win P2</th>
+      <th>Acciones</th>
+    </tr></thead>
+    <tbody>
+      ${matches.map(m => {
+        const p1n = playerName(m.p1) || '?';
+        const p2n = playerName(m.p2) || '?';
+        const wn = m.winnerId ? playerName(m.winnerId) : '—';
+        const s = m.stats || { p1: {}, p2: {} };
+        return `<tr>
+          <td>${formatDate(m.date)}</td>
+          <td style="font-weight:600;">${p1n} <span style="color:var(--text-muted);">vs</span> ${p2n}</td>
+          <td><span class="badge badge-gray">${m.result || '—'}</span></td>
+          <td style="font-weight:600;color:var(--accent-green);">${wn}</td>
+          <td>${surfaceLabel(m.surface)}</td>
+          <td>${typeLabel(m.matchType)}</td>
+          <td style="color:${(s.p1.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p1?.ufe ?? '—'}</td>
+          <td style="color:${(s.p2.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p2?.ufe ?? '—'}</td>
+          <td style="color:var(--accent-green);">${s.p1?.winners ?? '—'}</td>
+          <td style="color:var(--accent-blue);">${s.p2?.winners ?? '—'}</td>
+          <td>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btn-secondary btn-sm" onclick="openMatchDetail('${m.id}')">👁</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">🗑</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function deleteMatch(id) {
+  if (!confirm('¿Eliminar este partido y todos sus eventos?')) return;
+  db.matches = db.matches.filter(m => m.id !== id);
+  db.events = db.events.filter(e => e.matchId !== id);
+  saveData();
+  renderHistory();
+}
+
+let currentDetailMatchId = null;
+
+function openMatchDetail(id) {
+  currentDetailMatchId = id;
+  const m = db.matches.find(x => x.id === id);
+  if (!m) return;
+  const s = m.stats || { p1: {}, p2: {} };
+  const p1n = playerName(m.p1) || '?';
+  const p2n = playerName(m.p2) || '?';
+  const wn = m.winnerId ? playerName(m.winnerId) : '—';
+
+  document.getElementById('matchDetailContent').innerHTML = `
+    <div class="match-detail-header" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:22px;font-weight:700;">${p1n} <span style="color:var(--text-muted);">vs</span> ${p2n}</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">${formatDate(m.date)} · ${surfaceLabel(m.surface)} · ${typeLabel(m.matchType)}</div>
+          ${m.place ? `<div style="font-size:12px;color:var(--text-muted);">📍 ${m.place}</div>` : ''}
+        </div>
+        <div style="text-align:right;">
+          ${m.result ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;">${m.result}</div>` : ''}
+          <div style="color:var(--accent-green);font-weight:700;">Ganador: ${wn}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;">Estadísticas comparativas</div>
+    ${buildCompareBlock(s, p1n, p2n)}
+
+    ${m.preNotes ? `<div class="card" style="margin-top:16px;"><div class="card-title">Notas previas</div><p style="font-size:13px;color:var(--text-secondary);">${m.preNotes}</p></div>` : ''}
+    ${m.postNotes ? `<div class="card" style="margin-top:12px;"><div class="card-title">Notas post-partido</div><p style="font-size:13px;color:var(--text-secondary);">${m.postNotes}</p></div>` : ''}
+  `;
+  openModal('matchDetailModal');
+}
+
+function buildCompareBlock(s, p1n, p2n) {
+  const rows = [
+    { label: 'Aces', p1: s.p1?.aces||0, p2: s.p2?.aces||0 },
+    { label: 'Dobles faltas', p1: s.p1?.doubleFaults||0, p2: s.p2?.doubleFaults||0, lower: true },
+    { label: 'Winners', p1: s.p1?.winners||0, p2: s.p2?.winners||0 },
+    { label: 'Errores NF', p1: s.p1?.ufe||0, p2: s.p2?.ufe||0, lower: true },
+    { label: 'Errores forzados', p1: s.p1?.forcedErrors||0, p2: s.p2?.forcedErrors||0, lower: true },
+    { label: 'Puntos en red', p1: s.p1?.netPoints||0, p2: s.p2?.netPoints||0 },
+    { label: 'Restos ganadores', p1: s.p1?.returnWinners||0, p2: s.p2?.returnWinners||0 },
+    { label: 'Puntos totales', p1: s.p1?.pointsWon||0, p2: s.p2?.pointsWon||0 },
+  ];
+
+  return `
+  <div style="display:grid;grid-template-columns:80px 1fr 80px;gap:4px;align-items:center;margin-bottom:8px;padding:0 4px;">
+    <div style="text-align:right;font-weight:700;font-size:13px;color:var(--accent-green);">${p1n}</div>
+    <div></div>
+    <div style="font-weight:700;font-size:13px;color:var(--accent-blue);">${p2n}</div>
+  </div>
+  ${rows.map(r => {
+    const tot = r.p1 + r.p2;
+    const pct1 = tot > 0 ? (r.p1/tot*100) : 50;
+    const pct2 = 100 - pct1;
+    return `<div style="display:grid;grid-template-columns:80px 1fr 80px;gap:4px;align-items:center;margin-bottom:8px;padding:0 4px;">
+      <div style="text-align:right;font-family:'JetBrains Mono',monospace;font-weight:700;color:${(!r.lower&&r.p1>r.p2)||(r.lower&&r.p1<r.p2)?'var(--accent-green)':'var(--text-primary)'};">${r.p1}</div>
+      <div>
+        <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:3px;">${r.label}</div>
+        <div style="position:relative;height:8px;background:var(--bg-input);border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${pct1}%;background:var(--accent-green);border-radius:4px;"></div>
+          <div style="position:absolute;right:0;top:0;height:100%;width:${pct2}%;background:var(--accent-blue);border-radius:4px;"></div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${(!r.lower&&r.p2>r.p1)||(r.lower&&r.p2<r.p1)?'var(--accent-blue)':'var(--text-primary)'};">${r.p2}</div>
+    </div>`;
+  }).join('')}`;
+}
+
+// ============================================================
+// INSIGHTS
+// ============================================================
+function populateInsightsFilter() {
+  populatePlayerSelects();
+}
+
+function generateInsights() {
+  const playerFilter = document.getElementById('ins-player')?.value;
+  let matches = db.matches.filter(m => m.status === 'finished');
+  if (playerFilter) matches = matches.filter(m => m.p1 === playerFilter || m.p2 === playerFilter);
+
+  const strengths = [];
+  const weaknesses = [];
+  const patterns = [];
+  const recommendations = [];
+  const alerts = [];
+
+  if (!matches.length) {
+    ['insightsStrengths','insightsWeaknesses','insightsPatterns','insightsRecommendations','insightsAlerts'].forEach(id => {
+      document.getElementById(id).innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">Sin datos suficientes. Registra partidos para ver insights.</div>`;
+    });
+    return;
+  }
+
+  const playersToAnalyze = playerFilter ? [getPlayer(playerFilter)].filter(Boolean) : db.players;
+
+  playersToAnalyze.forEach(player => {
+    if (!player) return;
+    const pm = matches.filter(m => m.p1 === player.id || m.p2 === player.id);
+    if (!pm.length) return;
+
+    const n = pm.length;
+    const wins = pm.filter(m => m.winnerId === player.id).length;
+    const winRate = Math.round(wins/n*100);
+
+    const getStat = (stat) => pm.reduce((a,m) => {
+      const side = m.p1 === player.id ? 'p1' : 'p2';
+      return a + ((m.stats?.[side]||{})[stat]||0);
+    }, 0);
+
+    const totalUFE = getStat('ufe');
+    const totalWinners = getStat('winners');
+    const totalAces = getStat('aces');
+    const totalDF = getStat('doubleFaults');
+    const totalNetPts = getStat('netPoints');
+    const totalBigWon = getStat('bigPointsWon');
+    const totalBigTotal = getStat('bigPointsTotal');
+    const totalFHErrors = getStat('forehandErrors');
+    const totalBHErrors = getStat('backhandErrors');
+    const totalRallyLong = getStat('ralliesLong');
+    const totalRallyShort = getStat('ralliesShort');
+
+    const avgUFE = (totalUFE/n).toFixed(1);
+    const avgWinners = (totalWinners/n).toFixed(1);
+    const avgAces = (totalAces/n).toFixed(1);
+    const avgDF = (totalDF/n).toFixed(1);
+    const bigPtPct = totalBigTotal > 0 ? Math.round(totalBigWon/totalBigTotal*100) : null;
+    const bhErrorPct = totalUFE > 0 ? Math.round(totalBHErrors/totalUFE*100) : 0;
+    const fhErrorPct = totalUFE > 0 ? Math.round(totalFHErrors/totalUFE*100) : 0;
+
+    // Strengths
+    if (winRate >= 60) strengths.push({ player: player.name, text: `${player.name} mantiene un sólido porcentaje de victorias del ${winRate}% en ${n} partidos analizados.` });
+    if (parseFloat(avgAces) >= 4) strengths.push({ player: player.name, text: `${player.name} es un sacador dominante: promedia ${avgAces} aces por partido.` });
+    if (bigPtPct !== null && bigPtPct >= 55) strengths.push({ player: player.name, text: `${player.name} está siendo sólido en los momentos clave: gana el ${bigPtPct}% de los puntos importantes.` });
+    if (totalNetPts/n >= 3) strengths.push({ player: player.name, text: `${player.name} es efectivo subiendo a la red: ${(totalNetPts/n).toFixed(1)} puntos en red por partido.` });
+    if (parseFloat(avgWinners) >= 12) strengths.push({ player: player.name, text: `${player.name} genera mucho daño ofensivo con ${avgWinners} winners por partido.` });
+
+    // Weaknesses
+    if (parseFloat(avgUFE) > 18) weaknesses.push({ player: player.name, text: `${player.name} acumula muchos errores no forzados: ${avgUFE} por partido. Esto pone en riesgo los partidos largos.` });
+    if (parseFloat(avgDF) > 3) weaknesses.push({ player: player.name, text: `El segundo saque de ${player.name} genera demasiada presión: ${avgDF} dobles faltas por partido de media.` });
+    if (bhErrorPct > 40) weaknesses.push({ player: player.name, text: `El revés de ${player.name} concentra el ${bhErrorPct}% de sus errores no forzados. Es una zona de riesgo importante.` });
+    if (fhErrorPct > 50) weaknesses.push({ player: player.name, text: `La derecha de ${player.name} concentra el ${fhErrorPct}% de los errores no forzados. Puede ser explotada.` });
+    if (bigPtPct !== null && bigPtPct < 45) weaknesses.push({ player: player.name, text: `${player.name} baja el rendimiento en puntos importantes: solo gana el ${bigPtPct}% de break points y puntos críticos.` });
+
+    // Patterns
+    const highUFElosses = pm.filter(m => {
+      const side = m.p1 === player.id ? 'p1' : 'p2';
+      return (m.stats?.[side]?.ufe||0) > 20 && m.winnerId !== player.id;
+    }).length;
+    const highUFEgames = pm.filter(m => { const side = m.p1 === player.id ? 'p1' : 'p2'; return (m.stats?.[side]?.ufe||0) > 20; }).length;
+    if (highUFEgames >= 2) {
+      const lossRate = Math.round(highUFElosses/highUFEgames*100);
+      patterns.push({ player: player.name, text: `Cuando ${player.name} supera los 20 errores no forzados, pierde el ${lossRate}% de los partidos. El control de errores es clave.` });
+    }
+    if (totalRallyLong > 0 && totalRallyShort > 0) {
+      const longRatio = totalRallyLong/(totalRallyLong+totalRallyShort);
+      if (longRatio > 0.5) patterns.push({ player: player.name, text: `${player.name} tiende a jugar puntos largos (${Math.round(longRatio*100)}% de rallies de 9+ golpes). Puede ser favorable o una señal de falta de agresividad.` });
+    }
+    if (winRate >= 50 && parseFloat(avgUFE) > 15) patterns.push({ player: player.name, text: `${player.name} gana partidos a pesar de los errores (${avgUFE} ENF/partido), lo que sugiere que su nivel de winners compensa, pero es un riesgo en partidos ajustados.` });
+
+    // Recommendations
+    if (parseFloat(avgUFE) > 15) recommendations.push({ player: player.name, text: `Trabajar la consistencia en peloteos de más de 5 golpes. El objetivo es reducir los errores no forzados por debajo de 12 por partido.` });
+    if (parseFloat(avgDF) > 2.5) recommendations.push({ player: player.name, text: `Reforzar la mecánica del segundo saque. Incluir ejercicios de kick serve y top spin para ganar seguridad y reducir dobles faltas.` });
+    if (bigPtPct !== null && bigPtPct < 50) recommendations.push({ player: player.name, text: `Trabajar rutinas entre puntos y toma de decisiones bajo presión. Simular situaciones de break point en los entrenamientos.` });
+    if (bhErrorPct > 35) recommendations.push({ player: player.name, text: `Incluir trabajo específico de revés en situaciones de presión. Priorizar el revés cruzado de control sobre el revés ganador.` });
+
+    // Alerts
+    if (parseFloat(avgDF) > 4) alerts.push({ type: 'danger', player: player.name, text: `🔴 ALERTA: ${player.name} promedia ${avgDF} dobles faltas por partido. Situación crítica para el saque.` });
+    if (parseFloat(avgUFE) > 22) alerts.push({ type: 'danger', player: player.name, text: `🔴 ALERTA: ${player.name} tiene un nivel de errores muy alto (${avgUFE}/partido). Revisar urgentemente la consistencia.` });
+    if (winRate < 35 && n >= 3) alerts.push({ type: 'warning', player: player.name, text: `⚠ ${player.name} tiene un porcentaje de victoria bajo (${winRate}%). Es necesario un análisis profundo del juego.` });
+
+    // Coach notes cross-reference
+    const playerNotes = db.notes.filter(n => n.playerId === player.id);
+    const precipitationNotes = playerNotes.filter(n => (n.text||'').toLowerCase().includes('precipit') || (n.text||'').toLowerCase().includes('impacient'));
+    if (precipitationNotes.length >= 2) alerts.push({ type: 'warning', player: player.name, text: `⚠ Se repite una alerta cualitativa: el coach ha registrado ${precipitationNotes.length} observaciones sobre precipitación o impaciencia. Trabajar rutinas entre puntos.` });
+
+    const injuryNotes = playerNotes.filter(n => n.type === 'injury');
+    if (injuryNotes.length) alerts.push({ type: 'info', player: player.name, text: `ℹ ${player.name} tiene ${injuryNotes.length} nota(s) de lesión/molestia registradas. Supervisar la carga de entrenamiento.` });
+  });
+
+  const renderInsightList = (id, items, emptyMsg) => {
+    const el = document.getElementById(id);
+    if (!items.length) {
+      el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:12px 0;">${emptyMsg}</div>`;
+      return;
+    }
+    el.innerHTML = items.map(item => `<div class="insight-card ${item.type||''}">
+      <div class="insight-type">${item.player}</div>
+      <div class="insight-text">${item.text}</div>
+    </div>`).join('');
+  };
+
+  renderInsightList('insightsStrengths', strengths, 'No hay fortalezas destacadas con los datos actuales.');
+  renderInsightList('insightsWeaknesses', weaknesses.map(w => ({...w, type:'danger'})), 'No se detectan debilidades significativas.');
+  renderInsightList('insightsPatterns', patterns.map(p => ({...p, type:'info'})), 'No hay patrones claros detectados aún. Registra más partidos.');
+  renderInsightList('insightsRecommendations', recommendations.map(r => ({...r, type:'warning'})), 'Sin recomendaciones específicas en este momento.');
+
+  const alertsEl = document.getElementById('insightsAlerts');
+  if (!alerts.length) {
+    alertsEl.innerHTML = `<div style="color:var(--accent-green);font-size:13px;padding:12px 0;">✓ Sin alertas de rendimiento activas. ¡Todo bajo control!</div>`;
+  } else {
+    alertsEl.innerHTML = alerts.map(a => `<div class="insight-card ${a.type||''}">
+      <div class="insight-type">${a.player}</div>
+      <div class="insight-text">${a.text}</div>
+    </div>`).join('');
+  }
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function openNoteModal(id) {
+  populatePlayerSelects();
+  const today = new Date().toISOString().split('T')[0];
+  if (id) {
+    const n = db.notes.find(x => x.id === id);
+    document.getElementById('note-id').value = n.id;
+    document.getElementById('note-player').value = n.playerId || '';
+    document.getElementById('note-type').value = n.type || 'general';
+    document.getElementById('note-date').value = n.date || today;
+    document.getElementById('note-priority').value = n.priority || 'medium';
+    document.getElementById('note-text').value = n.text || '';
+  } else {
+    document.getElementById('note-id').value = '';
+    document.getElementById('note-player').value = '';
+    document.getElementById('note-type').value = 'general';
+    document.getElementById('note-date').value = today;
+    document.getElementById('note-priority').value = 'medium';
+    document.getElementById('note-text').value = '';
+  }
+  openModal('noteModal');
+}
+
+function saveNote() {
+  const text = document.getElementById('note-text').value.trim();
+  const playerId = document.getElementById('note-player').value;
+  if (!text) { showToast('El texto de la nota es obligatorio', 'error'); return; }
+
+  const id = document.getElementById('note-id').value;
+  const note = {
+    id: id || uid(),
+    playerId,
+    type: document.getElementById('note-type').value,
+    date: document.getElementById('note-date').value,
+    priority: document.getElementById('note-priority').value,
+    text,
+    createdAt: new Date().toISOString()
+  };
+
+  if (id) {
+    const idx = db.notes.findIndex(n => n.id === id);
+    if (idx > -1) db.notes[idx] = note;
+  } else {
+    db.notes.push(note);
+  }
+
+  saveData();
+  closeModal('noteModal');
+  renderNotes();
+  showToast('Nota guardada ✓');
+}
+
+function deleteNote(id) {
+  if (!confirm('¿Eliminar esta nota?')) return;
+  db.notes = db.notes.filter(n => n.id !== id);
+  saveData();
+  renderNotes();
+}
+
+function populateNoteFilters() {
+  populatePlayerSelects();
+}
+
+function renderNotes() {
+  const playerFilter = document.getElementById('nf-player')?.value;
+  const typeFilter = document.getElementById('nf-type')?.value;
+
+  let notes = [...db.notes];
+  if (playerFilter) notes = notes.filter(n => n.playerId === playerFilter);
+  if (typeFilter) notes = notes.filter(n => n.type === typeFilter);
+  notes.sort((a,b) => new Date(b.date)-new Date(a.date));
+
+  const list = document.getElementById('notesList');
+  if (!notes.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📝</div>
+      <div class="empty-state-title">Sin notas</div>
+      <div class="empty-state-text">Añade observaciones para enriquecer los insights del coach</div>
+      <button class="btn btn-primary" onclick="openNoteModal()">+ Nueva Nota</button>
+    </div>`;
+    return;
+  }
+
+  const typeColors = {
+    technical:'var(--accent-blue)', tactical:'var(--accent-green)', mental:'var(--accent-purple)',
+    physical:'var(--accent-orange)', nutrition:'#80cbc4', injury:'var(--accent-red)',
+    attitude:'var(--accent-orange)', decision:'var(--accent-blue)', pressure:'var(--accent-red)', general:'var(--text-muted)'
+  };
+  const typeNames = {
+    technical:'Técnico', tactical:'Táctico', mental:'Mental', physical:'Físico',
+    nutrition:'Nutrición', injury:'Lesión', attitude:'Actitud', decision:'Decisiones',
+    pressure:'Presión', general:'General'
+  };
+  const priorityColors = { low:'var(--text-muted)', medium:'var(--accent-orange)', high:'var(--accent-red)' };
+
+  list.innerHTML = notes.map(n => {
+    const pname = n.playerId ? playerName(n.playerId) : 'General';
+    return `<div class="note-card">
+      <div class="note-header">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span class="note-type-badge" style="background:${typeColors[n.type]}22;color:${typeColors[n.type]};">${typeNames[n.type]||n.type}</span>
+          <span style="font-weight:600;font-size:13px;">${pname}</span>
+          ${n.priority !== 'low' ? `<span style="color:${priorityColors[n.priority]};font-size:11px;font-weight:700;">● ${n.priority === 'high' ? 'ALTA' : 'MEDIA'}</span>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="note-meta">${formatDate(n.date)}</span>
+          <button class="btn btn-secondary btn-sm" onclick="openNoteModal('${n.id}')">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="note-text">${n.text}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// EXPORT / IMPORT
+// ============================================================
+function exportJSON() {
+  const data = JSON.stringify(db, null, 2);
+  downloadFile('tennis_coach_tracker_backup_' + new Date().toISOString().split('T')[0] + '.json', data, 'application/json');
+  showToast('Backup exportado ✓');
+}
+
+function exportMatchesCSV() {
+  const headers = ['fecha','jugador1','jugador2','resultado','ganador','superficie','tipo','aces_p1','aces_p2','errores_nf_p1','errores_nf_p2','winners_p1','winners_p2','dobles_faltas_p1','dobles_faltas_p2'];
+  const rows = db.matches.filter(m => m.status === 'finished').map(m => {
+    const s = m.stats || { p1: {}, p2: {} };
+    return [
+      m.date, playerName(m.p1), playerName(m.p2), m.result||'',
+      m.winnerId ? playerName(m.winnerId) : '',
+      m.surface, m.matchType,
+      s.p1?.aces||0, s.p2?.aces||0,
+      s.p1?.ufe||0, s.p2?.ufe||0,
+      s.p1?.winners||0, s.p2?.winners||0,
+      s.p1?.doubleFaults||0, s.p2?.doubleFaults||0
+    ];
+  });
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  downloadFile('partidos_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
+  showToast('CSV de partidos exportado ✓');
+}
+
+function exportPlayersCSV() {
+  const headers = ['nombre','edad','mano','reves','nivel','fortalezas','debilidades','objetivos'];
+  const rows = db.players.map(p => [p.name, p.age||'', p.hand, p.backhand, p.level, p.strengths||'', p.weaknesses||'', p.goals||'']);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  downloadFile('jugadores_' + new Date().toISOString().split('T')[0] + '.csv', csv, 'text/csv');
+  showToast('CSV de jugadores exportado ✓');
+}
+
+function downloadFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function printReport() {
+  window.print();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (!confirm('¿Importar y sobrescribir todos los datos actuales? Esta acción no se puede deshacer.')) return;
+      db = { players: [], matches: [], events: [], notes: [], settings: {}, ...parsed };
+      saveData();
+      document.getElementById('importAlert').innerHTML = '<div class="alert alert-success">✓ Datos importados correctamente. Recarga para ver los cambios.</div>';
+      showToast('Datos importados ✓');
+      setTimeout(() => location.reload(), 1500);
+    } catch(err) {
+      document.getElementById('importAlert').innerHTML = '<div class="alert alert-error">Error al parsear el JSON: ' + err.message + '</div>';
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function dropZoneOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('over'); }
+function dropZoneLeave(id) { document.getElementById(id).classList.remove('over'); }
+function dropJSON(e) {
+  e.preventDefault();
+  document.getElementById('dropZoneJSON').classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (file) { const event = { target: { files: [file], value: '' } }; importJSON(event); }
+}
+
+function openImportCalendarModal() {
+  openModal('importCalendarModal');
+}
+
+function previewCalendarCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: results => {
+      csvImportBuffer = results.data;
+      const preview = document.getElementById('csvPreview');
+      if (!results.data.length) { preview.innerHTML = '<div class="alert alert-error">CSV vacío o sin datos válidos</div>'; return; }
+      preview.innerHTML = `<div class="alert alert-info" style="margin-bottom:8px;">Se encontraron ${results.data.length} partidos. Vista previa:</div>
+        <div class="table-wrap" style="max-height:200px;overflow-y:auto;">
+          <table><thead><tr>${Object.keys(results.data[0]).map(k => `<th>${k}</th>`).join('')}</tr></thead>
+          <tbody>${results.data.slice(0,5).map(r => `<tr>${Object.values(r).map(v => `<td>${v}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table></div>`;
+      document.getElementById('importCSVConfirmBtn').style.display = 'block';
+    },
+    error: err => {
+      document.getElementById('csvPreview').innerHTML = '<div class="alert alert-error">Error al leer el CSV: ' + err.message + '</div>';
+    }
+  });
+}
+
+function confirmImportCalendarCSV() {
+  let imported = 0, skipped = 0;
+  csvImportBuffer.forEach(row => {
+    const fecha = row.fecha || row.date;
+    const j1 = row.jugador1 || row.player1;
+    const j2 = row.jugador2 || row.player2;
+    if (!fecha || !j1 || !j2) { skipped++; return; }
+
+    // Find or create players by name
+    let p1 = db.players.find(p => p.name.toLowerCase() === j1.toLowerCase());
+    if (!p1) { p1 = { id: uid(), name: j1, hand:'right', backhand:'two', level:'intermediate', createdAt: new Date().toISOString() }; db.players.push(p1); }
+    let p2 = db.players.find(p => p.name.toLowerCase() === j2.toLowerCase());
+    if (!p2) { p2 = { id: uid(), name: j2, hand:'right', backhand:'two', level:'intermediate', createdAt: new Date().toISOString() }; db.players.push(p2); }
+
+    db.matches.push({
+      id: uid(),
+      date: fecha,
+      time: row.hora || row.time || '',
+      p1: p1.id, p2: p2.id,
+      place: row.lugar || row.place || '',
+      surface: row.tipo_pista || row.surface || 'hard',
+      matchType: row.tipo_partido || row.type || 'training',
+      preNotes: row.notas || row.notes || '',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    });
+    imported++;
+  });
+
+  saveData();
+  csvImportBuffer = [];
+  closeModal('importCalendarModal');
+  navigate('calendar');
+  showToast(`${imported} partidos importados, ${skipped} omitidos`);
+}
+
+function importCalendarCSV(event) {
+  // This is the inline drop zone on export page - redirect to modal
+  previewCalendarCSV(event);
+}
+
+function clearAllData() {
+  if (!confirm('⚠ ATENCIÓN: ¿Eliminar TODOS los datos? Esta acción es irreversible.')) return;
+  if (!confirm('¿Estás completamente seguro? Se eliminarán todos los jugadores, partidos, notas e insights.')) return;
+  localStorage.removeItem('tct_db');
+  localStorage.removeItem('tct_live');
+  db = { players: [], matches: [], events: [], notes: [], settings: {} };
+  currentMatch = null;
+  showToast('Datos eliminados', 'error');
+  setTimeout(() => location.reload(), 1000);
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function refreshSettings() {
+  document.getElementById('cfg-coach-name').value = db.settings?.coachName || '';
+  document.getElementById('cfg-club').value = db.settings?.club || '';
+  document.getElementById('cfg-p1-color').value = db.settings?.p1Color || '#00e676';
+  document.getElementById('cfg-p2-color').value = db.settings?.p2Color || '#448aff';
+  document.getElementById('cfg-count-players').textContent = db.players.length;
+  document.getElementById('cfg-count-matches').textContent = db.matches.length;
+  document.getElementById('cfg-count-events').textContent = db.events.length;
+  document.getElementById('cfg-count-notes').textContent = db.notes.length;
+  try {
+    const size = new Blob([JSON.stringify(db)]).size;
+    document.getElementById('cfg-storage').textContent = (size/1024).toFixed(1) + ' KB';
+  } catch(e) { document.getElementById('cfg-storage').textContent = '—'; }
+}
+
+function saveSettings() {
+  db.settings = {
+    coachName: document.getElementById('cfg-coach-name').value,
+    club: document.getElementById('cfg-club').value,
+    p1Color: document.getElementById('cfg-p1-color').value,
+    p2Color: document.getElementById('cfg-p2-color').value
+  };
+  saveData();
+  showToast('Configuración guardada ✓');
+}
+
+// ============================================================
+// EXPORT MATCH REPORT HTML
+// ============================================================
+function exportMatchReportHTML() {
+  if (!currentDetailMatchId) return;
+  const m = db.matches.find(x => x.id === currentDetailMatchId);
+  if (!m) return;
+  const s = m.stats || { p1: {}, p2: {} };
+  const p1n = playerName(m.p1) || '?';
+  const p2n = playerName(m.p2) || '?';
+  const wn = m.winnerId ? playerName(m.winnerId) : '—';
+  const matchNotes = db.notes.filter(n => n.matchId === m.id);
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe Partido - ${p1n} vs ${p2n}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
+    h1 { color: #1a1a1a; border-bottom: 3px solid #00c853; padding-bottom: 12px; }
+    h2 { color: #333; font-size: 16px; margin-top: 24px; text-transform: uppercase; letter-spacing: 1px; }
+    .header { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+    .result { font-size: 28px; font-weight: bold; color: #1a1a1a; }
+    .winner { color: #00c853; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #f5f5f5; font-size: 12px; text-transform: uppercase; color: #666; }
+    .p1 { color: #00c853; } .p2 { color: #1565c0; }
+    @media print { body { margin: 0; } }
+  </style></head><body>
+  <div class="header">
+    <h1>🎾 Informe de Partido</h1>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div><strong>Jugadores:</strong> ${p1n} vs ${p2n}<br>
+      <strong>Fecha:</strong> ${formatDate(m.date)}<br>
+      <strong>Lugar:</strong> ${m.place||'—'}</div>
+      <div><strong>Superficie:</strong> ${surfaceLabel(m.surface)}<br>
+      <strong>Tipo:</strong> ${typeLabel(m.matchType)}<br>
+      <strong>Formato:</strong> ${m.format||'—'}</div>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="result">${m.result||'—'}</div>
+      <div class="winner">Ganador: ${wn}</div>
+    </div>
+  </div>
+  <h2>Estadísticas</h2>
+  <table>
+    <tr><th>Estadística</th><th class="p1">${p1n}</th><th class="p2">${p2n}</th></tr>
+    <tr><td>Aces</td><td class="p1">${s.p1?.aces||0}</td><td class="p2">${s.p2?.aces||0}</td></tr>
+    <tr><td>Dobles faltas</td><td class="p1">${s.p1?.doubleFaults||0}</td><td class="p2">${s.p2?.doubleFaults||0}</td></tr>
+    <tr><td>Winners</td><td class="p1">${s.p1?.winners||0}</td><td class="p2">${s.p2?.winners||0}</td></tr>
+    <tr><td>Errores no forzados</td><td class="p1">${s.p1?.ufe||0}</td><td class="p2">${s.p2?.ufe||0}</td></tr>
+    <tr><td>Errores forzados</td><td class="p1">${s.p1?.forcedErrors||0}</td><td class="p2">${s.p2?.forcedErrors||0}</td></tr>
+    <tr><td>Puntos en red</td><td class="p1">${s.p1?.netPoints||0}</td><td class="p2">${s.p2?.netPoints||0}</td></tr>
+    <tr><td>Puntos totales</td><td class="p1">${s.p1?.pointsWon||0}</td><td class="p2">${s.p2?.pointsWon||0}</td></tr>
+  </table>
+  ${m.preNotes ? `<h2>Notas previas</h2><p>${m.preNotes}</p>` : ''}
+  ${m.postNotes ? `<h2>Notas post-partido</h2><p>${m.postNotes}</p>` : ''}
+  <p style="color:#999;font-size:11px;margin-top:40px;">Generado con Tennis Coach Tracker · ${new Date().toLocaleDateString('es-ES')}</p>
+  </body></html>`;
+
+  downloadFile(`informe_${p1n}_vs_${p2n}_${m.date}.html`, html, 'text/html');
+  showToast('Informe exportado ✓');
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  navigate('dashboard');
+
+  // Add CSS animation
+  const style = document.createElement('style');
+  style.textContent = `@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+  document.head.appendChild(style);
+});
+
+// Auto-save every 60 seconds
+setInterval(() => {
+  if (db.players.length || db.matches.length) {
+    localStorage.setItem('tct_db', JSON.stringify(db));
+  }
+}, 60000);
+</script>
+</body>
+</html>
