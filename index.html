@@ -776,9 +776,145 @@ tbody tr:hover { background: var(--bg-card-hover); }
   color: var(--accent-green);
   background: rgba(0,230,118,0.04);
 }
+
+/* ===== PASSWORD SCREEN ===== */
+#passwordScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.password-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.password-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  letter-spacing: 4px;
+  color: var(--accent-green);
+  margin-bottom: 4px;
+}
+.password-coach {
+  font-size: 11px;
+  color: var(--accent-green);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  font-weight: 700;
+}
+.password-subtitle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 36px;
+}
+.password-input-wrap { position: relative; margin-bottom: 16px; }
+.password-input-wrap input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 14px 44px 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: border-color 0.2s;
+}
+.password-input-wrap input:focus { border-color: var(--accent-green); }
+.password-input-wrap input.error { border-color: var(--accent-red); animation: shake 0.3s ease; }
+@keyframes shake {
+  0%,100%{ transform:translateX(0); }
+  25%{ transform:translateX(-8px); }
+  75%{ transform:translateX(8px); }
+}
+.toggle-pw {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+}
+.password-error { color: var(--accent-red); font-size: 12px; margin-bottom: 12px; min-height: 18px; }
+.password-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-green);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.password-btn:hover { background: #00ff87; transform: translateY(-1px); }
+
+/* ===== SYNC STATUS ===== */
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+.sync-status.synced .sync-dot { background: var(--accent-green); }
+.sync-status.syncing .sync-dot { background: var(--accent-orange); animation: pulse 1s infinite; }
+.sync-status.error .sync-dot { background: var(--accent-red); }
 </style>
 </head>
 <body>
+
+<!-- ===== PASSWORD SCREEN ===== -->
+<div id="passwordScreen">
+  <div class="password-box">
+    <div style="margin-bottom:20px;">
+      <svg width="48" height="48" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 12px;display:block;">
+        <ellipse cx="28" cy="24" rx="18" ry="20" fill="none" stroke="#00e676" stroke-width="4"/>
+        <line x1="28" y1="4" x2="28" y2="44" stroke="#00e676" stroke-width="2"/>
+        <line x1="10" y1="24" x2="46" y2="24" stroke="#00e676" stroke-width="2"/>
+        <line x1="13" y1="12" x2="43" y2="36" stroke="#00e676" stroke-width="1.5"/>
+        <line x1="43" y1="12" x2="13" y2="36" stroke="#00e676" stroke-width="1.5"/>
+        <rect x="24" y="43" width="8" height="14" rx="3" fill="#00e676"/>
+        <rect x="20" y="55" width="16" height="5" rx="2" fill="#00c853"/>
+      </svg>
+      <div class="password-coach">Emmanuel Diez Lopez</div>
+      <div class="password-logo">EDL</div>
+      <div class="password-subtitle">Tennis Coach Tracker</div>
+    </div>
+    <div class="password-input-wrap">
+      <input type="password" id="pwInput" placeholder="Contraseña" onkeydown="if(event.key==='Enter')checkPassword()">
+      <button class="toggle-pw" onclick="togglePwVisibility()" title="Mostrar/ocultar">👁</button>
+    </div>
+    <div class="password-error" id="pwError"></div>
+    <button class="password-btn" onclick="checkPassword()">🔐 Acceder</button>
+    <div style="margin-top:20px;font-size:11px;color:var(--text-muted);" id="pwSyncInfo">Cargando configuración de nube...</div>
+  </div>
+</div>
 
 <!-- SIDEBAR OVERLAY (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -838,6 +974,10 @@ tbody tr:hover { background: var(--bg-card-hover); }
         <span class="topbar-title" id="topbarTitle">Dashboard</span>
       </div>
       <div class="topbar-actions">
+        <div id="syncStatusBadge" class="sync-status" title="Estado de sincronización en la nube">
+          <div class="sync-dot"></div>
+          <span id="syncStatusText">Sin configurar</span>
+        </div>
         <div id="liveIndicator" style="display:none;" class="live-badge"><div class="live-dot"></div>EN DIRECTO</div>
         <button class="btn btn-secondary btn-sm" onclick="saveData()">💾 Guardar</button>
       </div>
@@ -1441,7 +1581,27 @@ tbody tr:hover { background: var(--bg-card-hover); }
           </div>
 
           <div class="card">
-            <div class="card-title">Información</div>
+            <div class="card-title">☁️ Sincronización en la Nube (JSONBin.io)</div>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">
+              Guarda tus datos en la nube para acceder desde cualquier dispositivo.<br>
+              <strong style="color:var(--accent-green);">Pasos:</strong> 1) Crea cuenta gratis en <strong>jsonbin.io</strong> → 2) Crea un Bin vacío con <code style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">{}</code> → 3) Copia el <strong>Bin ID</strong> y tu <strong>API Key</strong> aquí.
+            </p>
+            <div class="form-group">
+              <label class="form-label">API Key (Master Key o Access Key)</label>
+              <input type="password" class="form-input" id="cfg-jsonbin-key" placeholder="$2a$10$...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bin ID</label>
+              <input type="text" class="form-input" id="cfg-jsonbin-bin" placeholder="64a1b2c3d4e5f6...">
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="saveCloudConfig()">Guardar configuración nube</button>
+              <button class="btn btn-blue btn-sm" onclick="testCloudConnection()">🔗 Probar conexión</button>
+              <button class="btn btn-orange btn-sm" onclick="forcePushToCloud()">⬆ Subir datos ahora</button>
+              <button class="btn btn-secondary btn-sm" onclick="forcePullFromCloud()">⬇ Bajar datos ahora</button>
+            </div>
+            <div id="cloudTestResult" style="margin-top:12px;font-size:12px;"></div>
+          </div>
             <div class="stat-row">
               <span class="stat-label">Versión</span>
               <span class="stat-value">1.0.0</span>
@@ -1720,6 +1880,149 @@ tbody tr:hover { background: var(--bg-card-hover); }
 
 <script>
 // ============================================================
+// CONSTANTS
+// ============================================================
+const APP_PASSWORD = 'EFD2026_tenis';
+const SESSION_KEY  = 'tct_session';   // session token in sessionStorage
+const LOCAL_KEY    = 'tct_db';
+const CLOUD_KEY    = 'tct_cloud_cfg'; // {apiKey, binId}
+
+// ============================================================
+// PASSWORD & SESSION
+// ============================================================
+function checkPassword() {
+  const input = document.getElementById('pwInput').value;
+  const errEl = document.getElementById('pwError');
+  const pwField = document.getElementById('pwInput');
+  if (input === APP_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, '1'); // valid for this browser tab session
+    errEl.textContent = '';
+    unlockApp();
+  } else {
+    errEl.textContent = '⚠ Contraseña incorrecta. Inténtalo de nuevo.';
+    pwField.classList.add('error');
+    pwField.value = '';
+    setTimeout(() => pwField.classList.remove('error'), 400);
+  }
+}
+
+function togglePwVisibility() {
+  const input = document.getElementById('pwInput');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function unlockApp() {
+  const screen = document.getElementById('passwordScreen');
+  screen.style.opacity = '0';
+  screen.style.transition = 'opacity 0.4s ease';
+  setTimeout(() => { screen.style.display = 'none'; }, 400);
+  loadData();
+  navigate('dashboard');
+}
+
+// ============================================================
+// CLOUD SYNC — JSONBin.io
+// ============================================================
+function getCloudCfg() {
+  try { return JSON.parse(localStorage.getItem(CLOUD_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function setCloudCfg(cfg) {
+  localStorage.setItem(CLOUD_KEY, JSON.stringify(cfg));
+}
+
+function setSyncStatus(state, text) {
+  const badge = document.getElementById('syncStatusBadge');
+  const label = document.getElementById('syncStatusText');
+  if (!badge) return;
+  badge.className = 'sync-status ' + state;
+  label.textContent = text;
+}
+
+async function cloudPush() {
+  const { apiKey, binId } = getCloudCfg();
+  if (!apiKey || !binId) return false;
+  setSyncStatus('syncing', 'Guardando...');
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': apiKey },
+      body: JSON.stringify(db)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    setSyncStatus('synced', '☁ Sincronizado');
+    return true;
+  } catch(e) {
+    setSyncStatus('error', '✕ Error nube');
+    console.error('Cloud push error:', e);
+    return false;
+  }
+}
+
+async function cloudPull() {
+  const { apiKey, binId } = getCloudCfg();
+  if (!apiKey || !binId) return null;
+  setSyncStatus('syncing', 'Cargando...');
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': apiKey }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    setSyncStatus('synced', '☁ Sincronizado');
+    return json.record || null;
+  } catch(e) {
+    setSyncStatus('error', '✕ Error nube');
+    console.error('Cloud pull error:', e);
+    return null;
+  }
+}
+
+async function forcePushToCloud() {
+  const ok = await cloudPush();
+  showToast(ok ? '☁ Datos subidos a la nube ✓' : 'Error al subir a la nube', ok ? 'success' : 'error');
+}
+
+async function forcePullFromCloud() {
+  const remote = await cloudPull();
+  if (!remote) { showToast('Error al bajar datos o sin configurar', 'error'); return; }
+  if (!confirm('¿Sobrescribir datos locales con los datos de la nube?')) return;
+  db = { players:[], matches:[], events:[], notes:[], settings:{}, ...remote };
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+  showToast('⬇ Datos descargados de la nube ✓');
+  navigate(document.querySelector('.nav-item.active')?.textContent.trim() || 'dashboard');
+}
+
+async function testCloudConnection() {
+  const key = document.getElementById('cfg-jsonbin-key').value.trim();
+  const bin = document.getElementById('cfg-jsonbin-bin').value.trim();
+  const resultEl = document.getElementById('cloudTestResult');
+  if (!key || !bin) { resultEl.innerHTML = '<span style="color:var(--accent-red);">Introduce la API Key y el Bin ID primero.</span>'; return; }
+  resultEl.innerHTML = '<span style="color:var(--accent-orange);">Probando conexión...</span>';
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${bin}/latest`, {
+      headers: { 'X-Master-Key': key }
+    });
+    if (res.ok) {
+      resultEl.innerHTML = '<span style="color:var(--accent-green);">✓ Conexión correcta. JSONBin responde bien.</span>';
+    } else {
+      resultEl.innerHTML = `<span style="color:var(--accent-red);">✕ Error ${res.status}: Verifica la API Key y el Bin ID.</span>`;
+    }
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:var(--accent-red);">✕ Error de red: ${e.message}</span>`;
+  }
+}
+
+function saveCloudConfig() {
+  const key = document.getElementById('cfg-jsonbin-key').value.trim();
+  const bin = document.getElementById('cfg-jsonbin-bin').value.trim();
+  if (!key || !bin) { showToast('Introduce API Key y Bin ID', 'error'); return; }
+  setCloudCfg({ apiKey: key, binId: bin });
+  showToast('Configuración de nube guardada ✓');
+  setSyncStatus('synced', '☁ Configurado');
+}
+
+// ============================================================
 // DATA STORE
 // ============================================================
 let db = {
@@ -1750,22 +2053,51 @@ const GAME_POINTS = ['0', '15', '30', '40', 'A'];
 // ============================================================
 // PERSISTENCE
 // ============================================================
-function saveData() {
+async function saveData() {
   try {
-    localStorage.setItem('tct_db', JSON.stringify(db));
-    showToast('💾 Datos guardados', 'success');
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+    showToast('💾 Guardado localmente', 'success');
+    // Also push to cloud if configured
+    const { apiKey, binId } = getCloudCfg();
+    if (apiKey && binId) {
+      await cloudPush();
+    } else {
+      setSyncStatus('', 'Solo local');
+    }
   } catch(e) {
     showToast('Error al guardar: ' + e.message, 'error');
   }
 }
 
-function loadData() {
+async function loadData() {
+  // 1. Load from localStorage immediately (instant)
   try {
-    const raw = localStorage.getItem('tct_db');
+    const raw = localStorage.getItem(LOCAL_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      db = { ...db, ...parsed };
+      db = { players:[], matches:[], events:[], notes:[], settings:{}, ...parsed };
     }
+  } catch(e) { console.error('Local load error:', e); }
+
+  // 2. Try to pull fresher data from cloud
+  const { apiKey, binId } = getCloudCfg();
+  if (apiKey && binId) {
+    const remote = await cloudPull();
+    if (remote && Object.keys(remote).length > 0) {
+      // Merge: use remote if it has more data, or is more recent
+      const remoteMatches = remote.matches?.length || 0;
+      const localMatches  = db.matches?.length || 0;
+      if (remoteMatches >= localMatches) {
+        db = { players:[], matches:[], events:[], notes:[], settings:{}, ...remote };
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(db)); // update local cache
+      }
+    }
+  } else {
+    setSyncStatus('', 'Sin nube');
+  }
+
+  // 3. Restore live match state
+  try {
     const liveSaved = localStorage.getItem('tct_live');
     if (liveSaved) {
       const liveData = JSON.parse(liveSaved);
@@ -1773,11 +2105,12 @@ function loadData() {
       liveScore = liveData.score;
       if (currentMatch) {
         document.getElementById('liveIndicator').style.display = 'flex';
-        renderLiveScoreboard();
-        renderLiveStats();
       }
     }
-  } catch(e) { console.error('Load error:', e); }
+  } catch(e) {}
+
+  // Refresh current section
+  refreshDashboard();
 }
 
 function saveLiveState() {
@@ -3479,7 +3812,7 @@ function importCalendarCSV(event) {
 function clearAllData() {
   if (!confirm('⚠ ATENCIÓN: ¿Eliminar TODOS los datos? Esta acción es irreversible.')) return;
   if (!confirm('¿Estás completamente seguro? Se eliminarán todos los jugadores, partidos, notas e insights.')) return;
-  localStorage.removeItem('tct_db');
+  localStorage.removeItem(LOCAL_KEY);
   localStorage.removeItem('tct_live');
   db = { players: [], matches: [], events: [], notes: [], settings: {} };
   currentMatch = null;
@@ -3503,6 +3836,11 @@ function refreshSettings() {
     const size = new Blob([JSON.stringify(db)]).size;
     document.getElementById('cfg-storage').textContent = (size/1024).toFixed(1) + ' KB';
   } catch(e) { document.getElementById('cfg-storage').textContent = '—'; }
+
+  // Populate cloud fields
+  const { apiKey, binId } = getCloudCfg();
+  if (apiKey) document.getElementById('cfg-jsonbin-key').value = apiKey;
+  if (binId)  document.getElementById('cfg-jsonbin-bin').value  = binId;
 }
 
 function saveSettings() {
@@ -3591,8 +3929,23 @@ document.addEventListener('keydown', e => {
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded', () => {
-  loadData();
-  navigate('dashboard');
+  // Check if already authenticated this session
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    document.getElementById('passwordScreen').style.display = 'none';
+    loadData().then(() => navigate('dashboard'));
+  } else {
+    // Show password screen; check if cloud is configured
+    const { apiKey, binId } = getCloudCfg();
+    const info = document.getElementById('pwSyncInfo');
+    if (apiKey && binId) {
+      info.innerHTML = '☁ Nube configurada · Los datos se sincronizarán al entrar';
+      info.style.color = 'var(--accent-green)';
+    } else {
+      info.innerHTML = '⚠ Sin nube configurada · Ve a Configuración tras entrar';
+      info.style.color = 'var(--accent-orange)';
+    }
+    document.getElementById('pwInput').focus();
+  }
 
   // Add CSS animation
   const style = document.createElement('style');
@@ -3600,10 +3953,12 @@ window.addEventListener('DOMContentLoaded', () => {
   document.head.appendChild(style);
 });
 
-// Auto-save every 60 seconds
-setInterval(() => {
+// Auto-save every 60 seconds (local + cloud)
+setInterval(async () => {
   if (db.players.length || db.matches.length) {
-    localStorage.setItem('tct_db', JSON.stringify(db));
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(db));
+    const { apiKey, binId } = getCloudCfg();
+    if (apiKey && binId) await cloudPush();
   }
 }, 60000);
 </script>
