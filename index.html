@@ -1923,8 +1923,20 @@ function unlockApp() {
 // ============================================================
 // CLOUD SYNC — JSONBin.io
 // ============================================================
+const DEFAULT_CLOUD = {
+  apiKey: '$2a$10$G9hs8Ifjiq7utsM0jvLNJuzzIvcVzK.kd7a/tT2.oVtewWZmtrrC6',
+  binId:  '69f30ea0aaba882197552da0'
+};
+
 function getCloudCfg() {
-  try { return JSON.parse(localStorage.getItem(CLOUD_KEY) || '{}'); } catch(e) { return {}; }
+  try {
+    const stored = JSON.parse(localStorage.getItem(CLOUD_KEY) || '{}');
+    // Use stored values if present, otherwise fall back to defaults
+    return {
+      apiKey: stored.apiKey || DEFAULT_CLOUD.apiKey,
+      binId:  stored.binId  || DEFAULT_CLOUD.binId
+    };
+  } catch(e) { return DEFAULT_CLOUD; }
 }
 
 function setCloudCfg(cfg) {
