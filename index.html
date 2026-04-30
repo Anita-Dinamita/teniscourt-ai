@@ -1074,6 +1074,337 @@ tbody tr:hover { background: var(--bg-card-hover); }
 .sync-status.synced .sync-dot { background: var(--accent-green); }
 .sync-status.syncing .sync-dot { background: var(--accent-orange); animation: pulse 1s infinite; }
 .sync-status.error .sync-dot { background: var(--accent-red); }
+
+/* ===== LIVE2 TRACKING UI ===== */
+
+/* Top bar */
+.live-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0 14px;
+  gap: 10px;
+}
+.live-topbar-center { flex: 1; text-align: center; }
+.live-action-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.undo-btn { background: rgba(255,152,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,152,0,0.3); }
+.undo-btn:active { background: rgba(255,152,0,0.3); transform: scale(0.96); }
+.finish-btn { background: var(--accent-green); color: #000; }
+.finish-btn:active { transform: scale(0.96); }
+
+/* Scoreboard */
+.live2-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 8px;
+  align-items: center;
+  background: linear-gradient(135deg, #0b1a10, #0a1020);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  margin-bottom: 10px;
+}
+.live2-player { display: flex; flex-direction: column; gap: 4px; }
+.live2-player.p1-side { align-items: flex-start; }
+.live2-player.p2-side { align-items: flex-end; }
+.live2-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.live2-player.p1-side .live2-name { color: var(--accent-green); }
+.live2-player.p2-side .live2-name { color: var(--accent-blue); }
+.live2-sets { display: flex; gap: 4px; }
+.live2-set-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.live2-set-chip.won { background: rgba(0,230,118,0.15); border-color: var(--accent-green); color: var(--accent-green); }
+.live2-set-chip.p2.won { background: rgba(68,138,255,0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+.live2-games {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 44px;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.live2-center { text-align: center; }
+.live2-points {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.live2-context {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-orange);
+  margin: 3px 0;
+  min-height: 14px;
+}
+.live2-server-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
+.live2-server-indicator {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border-light);
+  transition: all 0.3s;
+}
+.live2-server-indicator.p1.active { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.live2-server-indicator.p2.active { background: var(--accent-blue); box-shadow: 0 0 6px var(--accent-blue); }
+
+/* Events tape */
+.live2-tape {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.live2-tape::-webkit-scrollbar { display: none; }
+.live2-tape-chip {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+.live2-tape-chip.p1 { border-color: rgba(0,230,118,0.3); color: var(--accent-green); background: rgba(0,230,118,0.06); }
+.live2-tape-chip.p2 { border-color: rgba(68,138,255,0.3); color: var(--accent-blue); background: rgba(68,138,255,0.06); }
+
+/* Split court */
+.live2-court {
+  display: grid;
+  grid-template-columns: 1fr 28px 1fr;
+  gap: 0;
+  margin-bottom: 12px;
+  min-height: 420px;
+}
+.live2-side {
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.live2-side.p1-wins { background: rgba(0,230,118,0.04); border: 1px solid rgba(0,230,118,0.15); border-radius: var(--radius) 0 0 var(--radius); }
+.live2-side.p2-wins { background: rgba(68,138,255,0.04); border: 1px solid rgba(68,138,255,0.15); border-radius: 0 var(--radius) var(--radius) 0; }
+.live2-side-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 6px 0;
+}
+.live2-side-label.p1 { color: var(--accent-green); }
+.live2-side-label.p2 { color: var(--accent-blue); }
+.live2-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  writing-mode: vertical-rl;
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Action buttons grid */
+.live2-btns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  flex: 1;
+}
+.live2-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.12s;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 64px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.live2-btn:active { transform: scale(0.94); }
+.lbtn-icon { font-size: 18px; line-height: 1; }
+.lbtn-label { font-size: 11px; font-weight: 700; color: var(--text-primary); text-align: center; line-height: 1.2; }
+.lbtn-sub { font-size: 9px; color: var(--text-muted); text-align: center; line-height: 1; }
+
+/* Button variants — P1 side */
+.live2-btn.ace    { border-color: rgba(0,230,118,0.4); background: rgba(0,230,118,0.08); }
+.live2-btn.winner { border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
+.live2-btn.net    { border-color: rgba(0,230,118,0.25); background: rgba(0,230,118,0.04); }
+.live2-btn.return { border-color: rgba(0,230,118,0.25); background: rgba(0,230,118,0.04); }
+.live2-btn.ufe    { border-color: rgba(255,152,0,0.3); background: rgba(255,152,0,0.05); }
+.live2-btn.forced { border-color: rgba(255,82,82,0.25); background: rgba(255,82,82,0.04); }
+.live2-btn.df     { border-color: rgba(255,82,82,0.35); background: rgba(255,82,82,0.07); }
+.live2-btn.rally  { border-color: rgba(68,138,255,0.25); background: rgba(68,138,255,0.04); }
+
+/* Button variants — P2 side */
+.live2-btn.p2.ace    { border-color: rgba(68,138,255,0.4); background: rgba(68,138,255,0.08); }
+.live2-btn.p2.winner { border-color: rgba(68,138,255,0.3); background: rgba(68,138,255,0.05); }
+.live2-btn.p2.net    { border-color: rgba(68,138,255,0.25); background: rgba(68,138,255,0.04); }
+.live2-btn.p2.return { border-color: rgba(68,138,255,0.25); background: rgba(68,138,255,0.04); }
+.live2-btn.p2.rally  { border-color: rgba(68,138,255,0.25); background: rgba(68,138,255,0.04); }
+
+/* Flash feedback on point register */
+@keyframes flashP1 { 0%,100%{background:rgba(0,230,118,0.04)} 30%{background:rgba(0,230,118,0.22)} }
+@keyframes flashP2 { 0%,100%{background:rgba(68,138,255,0.04)} 30%{background:rgba(68,138,255,0.22)} }
+.live2-side.p1-wins.flash { animation: flashP1 0.5s ease; }
+.live2-side.p2-wins.flash { animation: flashP2 0.5s ease; }
+
+/* Bottom strip */
+.live2-bottom-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.live2-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.live2-mini-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 6px;
+  text-align: center;
+}
+.live2-mini-stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.live2-mini-stat-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+.live2-note-row { display: flex; gap: 8px; }
+.live2-note-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+}
+.live2-note-input:focus { border-color: var(--accent-green); }
+.live2-note-btn {
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+.live2-note-btn:hover { color: var(--accent-green); border-color: var(--accent-green); }
+
+/* Server toggle */
+.live2-server-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  flex-wrap: wrap;
+}
+.live2-srv-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+  text-align: center;
+}
+.live2-srv-btn.active-p1 { border-color: var(--accent-green); color: var(--accent-green); background: rgba(0,230,118,0.08); }
+.live2-srv-btn.active-p2 { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(68,138,255,0.08); }
+
+/* Context toggle strip */
+.live2-context-strip {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.ctx-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.ctx-btn.active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255,152,0,0.1); }
+
+/* Mobile overrides for live2 */
+@media (max-width: 600px) {
+  .live2-court { min-height: 0; grid-template-columns: 1fr 20px 1fr; }
+  .live2-btns-grid { gap: 5px; }
+  .live2-btn { min-height: 58px; padding: 8px 4px; }
+  .lbtn-icon { font-size: 16px; }
+  .lbtn-label { font-size: 10px; }
+  .live2-games { font-size: 36px; }
+  .live2-points { font-size: 22px; }
+  .live2-mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .live2-name { font-size: 11px; max-width: 90px; }
+  .live2-server-toggle { gap: 6px; }
+  .live2-scoreboard { padding: 12px 10px; }
+  .live-topbar { padding: 6px 0 10px; }
+  .live-action-btn { padding: 7px 10px; font-size: 12px; }
+  .ctx-btn { font-size: 10px; padding: 4px 9px; }
+}
 </style>
 </head>
 <body>
@@ -1408,175 +1739,124 @@ tbody tr:hover { background: var(--bg-card-hover); }
 
       <!-- ==================== LIVE TRACKING ==================== -->
       <div class="section" id="section-live">
-        <div class="section-header">
-          <div class="section-title">Seguimiento en Directo</div>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <div class="live-badge"><div class="live-dot"></div>EN DIRECTO</div>
-            <button class="btn btn-secondary btn-sm" onclick="undoLastEvent()">↩ Deshacer</button>
-            <button class="btn btn-orange btn-sm" onclick="finishMatch()">✓ Finalizar</button>
-          </div>
-        </div>
 
         <!-- No match warning -->
         <div id="noMatchWarning" style="display:none;">
-          <div class="empty-state">
+          <div class="empty-state" style="padding-top:80px;">
             <div class="empty-state-icon">🎾</div>
             <div class="empty-state-title">Sin partido activo</div>
             <div class="empty-state-text">Crea un nuevo partido para iniciar el seguimiento en directo</div>
-            <button class="btn btn-primary" onclick="navigate('new-match')">+ Nuevo Partido</button>
+            <button class="btn btn-primary btn-lg" onclick="navigate('new-match')">+ Nuevo Partido</button>
           </div>
         </div>
 
         <div id="liveMatchContent">
-          <!-- SCOREBOARD -->
-          <div class="live-scoreboard">
-            <div class="scoreboard-header">
-              <div class="player-score-info">
-                <div class="score-name" id="live-p1-name" style="color:var(--accent-green)">—</div>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
-                  <span class="serve-dot" id="serve-p1" style="display:none;"></span>
-                  <span style="font-size:12px;color:var(--text-muted);" id="serve-p1-label"></span>
-                </div>
-                <div class="score-sets" id="live-p1-sets"></div>
-              </div>
 
-              <div class="score-vs">
-                <div class="score-game" id="live-score-display">0 - 0</div>
-                <div class="score-context" id="live-score-context">Puntos</div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:4px;" id="live-game-info">Juego 1 · Set 1</div>
-              </div>
-
-              <div class="player-score-info" style="text-align:right;align-items:flex-end;">
-                <div class="score-name" id="live-p2-name" style="color:var(--accent-blue)">—</div>
-                <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-direction:row-reverse;">
-                  <span class="serve-dot" id="serve-p2" style="display:none;"></span>
-                  <span style="font-size:12px;color:var(--text-muted);" id="serve-p2-label"></span>
-                </div>
-                <div class="score-sets" id="live-p2-sets"></div>
-              </div>
+          <!-- ══ TOP BAR ══ -->
+          <div class="live-topbar">
+            <div class="live-badge" style="font-size:10px;"><div class="live-dot"></div>EN VIVO</div>
+            <div class="live-topbar-center">
+              <span id="ltb-set" style="font-size:11px;letter-spacing:1px;color:var(--text-muted);text-transform:uppercase;">Set 1 · Juego 1</span>
             </div>
-
-            <!-- Last events log -->
-            <div class="live-events-log" id="liveEventsLog">
-              <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px 0;">Los eventos aparecerán aquí...</div>
+            <div style="display:flex;gap:6px;">
+              <button class="live-action-btn undo-btn" onclick="undoLastEvent()" title="Deshacer último punto">↩ Deshacer</button>
+              <button class="live-action-btn finish-btn" onclick="finishMatch()" title="Finalizar partido">✓ Fin</button>
             </div>
           </div>
 
-          <!-- POINT REGISTRATION -->
-          <div class="grid-2">
-            <div>
-              <!-- Quick buttons -->
-              <div class="card" style="margin-bottom:16px;">
-                <div class="card-title">Botones Rápidos</div>
-                <div class="live-quick-btns">
-                  <button class="quick-btn green" onclick="quickEvent('ace')">🎯 Ace</button>
-                  <button class="quick-btn red" onclick="quickEvent('double_fault')">❌ Doble Falta</button>
-                  <button class="quick-btn green" onclick="quickEvent('winner_fh')">✅ Winner DH</button>
-                  <button class="quick-btn green" onclick="quickEvent('winner_bh')">✅ Winner RV</button>
-                  <button class="quick-btn red" onclick="quickEvent('ufe_fh')">⚠ Error NF DH</button>
-                  <button class="quick-btn red" onclick="quickEvent('ufe_bh')">⚠ Error NF RV</button>
-                  <button class="quick-btn blue" onclick="quickEvent('return_winner')">↩ Resto Ganador</button>
-                  <button class="quick-btn orange" onclick="quickEvent('return_error')">↩ Resto Fallado</button>
-                  <button class="quick-btn blue" onclick="quickEvent('net_point')">🔝 Punto Red</button>
-                  <button class="quick-btn green" onclick="quickEvent('rally_won')">🔄 Rally Ganado</button>
-                  <button class="quick-btn red" onclick="quickEvent('rally_lost')">🔄 Rally Perdido</button>
-                  <button class="quick-btn orange" onclick="quickEvent('forced_error')">💥 Error Forzado</button>
-                </div>
+          <!-- ══ SCOREBOARD ══ -->
+          <div class="live2-scoreboard">
+            <div class="live2-player p1-side" id="live2-p1-block">
+              <div class="live2-name" id="live2-p1-name">—</div>
+              <div class="live2-sets" id="live2-p1-sets"></div>
+              <div class="live2-games" id="live2-p1-games">0</div>
+            </div>
+            <div class="live2-center">
+              <div class="live2-points" id="live2-points">0 - 0</div>
+              <div class="live2-context" id="live2-context">·</div>
+              <div class="live2-server-row">
+                <div class="live2-server-indicator p1" id="srv-p1"></div>
+                <span style="font-size:9px;color:var(--text-muted);letter-spacing:1px;">SAQUE</span>
+                <div class="live2-server-indicator p2" id="srv-p2"></div>
               </div>
+            </div>
+            <div class="live2-player p2-side" id="live2-p2-block">
+              <div class="live2-name" id="live2-p2-name">—</div>
+              <div class="live2-sets" id="live2-p2-sets"></div>
+              <div class="live2-games" id="live2-p2-games">0</div>
+            </div>
+          </div>
 
-              <!-- Player selector -->
-              <div class="card" style="margin-bottom:16px;">
-                <div class="card-title">¿Quién ganó el punto?</div>
-                <div class="player-selector">
-                  <button class="player-select-btn p1" id="selectP1Btn" onclick="selectPointWinner(1)">— P1</button>
-                  <button class="player-select-btn p2" id="selectP2Btn" onclick="selectPointWinner(2)">P2 —</button>
-                </div>
-                <div class="card-title" style="margin-top:12px;">Servidor</div>
-                <div class="player-selector">
-                  <button class="player-select-btn p1" id="serverP1Btn" onclick="selectServer(1)">P1 saca</button>
-                  <button class="player-select-btn p2" id="serverP2Btn" onclick="selectServer(2)">P2 saca</button>
-                </div>
+          <!-- ══ CONTEXT STRIP ══ -->
+          <div class="live2-context-strip">
+            <span style="font-size:10px;color:var(--text-muted);letter-spacing:1px;align-self:center;">CONTEXTO:</span>
+            <button class="ctx-btn active" id="ctx-normal" onclick="setContext('normal')">Normal</button>
+            <button class="ctx-btn" id="ctx-breakpoint" onclick="setContext('breakpoint')">🔑 Break Point</button>
+            <button class="ctx-btn" id="ctx-setpoint" onclick="setContext('setpoint')">📍 Set Point</button>
+            <button class="ctx-btn" id="ctx-matchpoint" onclick="setContext('matchpoint')">🏆 Match Point</button>
+            <button class="ctx-btn" id="ctx-deuce" onclick="setContext('deuce')">⚖ Deuce</button>
+          </div>
+
+          <!-- ══ LAST EVENTS TAPE ══ -->
+          <div class="live2-tape" id="live2-tape">
+            <span style="color:var(--text-muted);font-size:11px;">Los puntos aparecerán aquí...</span>
+          </div>
+
+          <!-- ══ SPLIT COURT — MAIN ACTION AREA ══ -->
+          <div class="live2-court">
+            <!-- P1 WINS SIDE -->
+            <div class="live2-side p1-wins" id="live2-side-p1">
+              <div class="live2-side-label p1"><span id="lbl-p1-short">P1</span> gana ↓</div>
+              <div class="live2-btns-grid">
+                <button class="live2-btn ace"    onclick="oneClick(1,'ace','serve')"><span class="lbtn-icon">🎯</span><span class="lbtn-label">Ace</span></button>
+                <button class="live2-btn winner" onclick="oneClick(1,'winner','forehand')"><span class="lbtn-icon">✅</span><span class="lbtn-label">Winner DH</span></button>
+                <button class="live2-btn winner" onclick="oneClick(1,'winner','backhand')"><span class="lbtn-icon">✅</span><span class="lbtn-label">Winner RV</span></button>
+                <button class="live2-btn net"    onclick="oneClick(1,'net_winner','volley')"><span class="lbtn-icon">🔝</span><span class="lbtn-label">Punto Red</span></button>
+                <button class="live2-btn return" onclick="oneClick(1,'return_winner','return')"><span class="lbtn-icon">↩</span><span class="lbtn-label">Resto ✓</span></button>
+                <button class="live2-btn rally"  onclick="oneClick(1,'rally_long','forehand')"><span class="lbtn-icon">🔄</span><span class="lbtn-label">Rally ✓</span></button>
+                <button class="live2-btn ufe"    onclick="oneClick(1,'ufe','forehand')"><span class="lbtn-icon">⚠</span><span class="lbtn-label">ENF DH</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn ufe"    onclick="oneClick(1,'ufe','backhand')"><span class="lbtn-icon">⚠</span><span class="lbtn-label">ENF RV</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn forced" onclick="oneClick(1,'forced_error','forehand')"><span class="lbtn-icon">💥</span><span class="lbtn-label">E. Forzado</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn df"     onclick="oneClick(1,'double_fault','serve')"><span class="lbtn-icon">✕✕</span><span class="lbtn-label">Doble Falta</span><span class="lbtn-sub">rival saca</span></button>
               </div>
             </div>
 
-            <div>
-              <!-- Detailed event form -->
-              <div class="card" style="margin-bottom:16px;">
-                <div class="card-title">Detalle del punto</div>
-                <div class="form-group">
-                  <label class="form-label">Tipo de punto</label>
-                  <select class="form-select" id="ev-type">
-                    <option value="winner">Winner</option>
-                    <option value="ufe">Error no forzado</option>
-                    <option value="forced_error">Error forzado</option>
-                    <option value="ace">Ace / Saque directo</option>
-                    <option value="double_fault">Doble falta</option>
-                    <option value="net_winner">Punto ganado en red</option>
-                    <option value="return_winner">Resto ganador</option>
-                    <option value="return_error">Resto fallado</option>
-                    <option value="rally_long">Punto largo (9+ golpes)</option>
-                    <option value="rally_medium">Punto medio (5-8 golpes)</option>
-                    <option value="rally_short">Punto corto (0-4 golpes)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Golpe relacionado</label>
-                  <select class="form-select" id="ev-shot">
-                    <option value="serve">Saque</option>
-                    <option value="return">Resto</option>
-                    <option value="forehand">Derecha</option>
-                    <option value="backhand">Revés</option>
-                    <option value="volley">Volea</option>
-                    <option value="smash">Smash</option>
-                    <option value="dropshot">Dejada</option>
-                    <option value="lob">Globo</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Zona</label>
-                  <select class="form-select" id="ev-zone">
-                    <option value="deuce">Lado derecho</option>
-                    <option value="ad">Lado revés</option>
-                    <option value="center">Centro</option>
-                    <option value="net">Red</option>
-                    <option value="back">Fondo</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Contexto</label>
-                  <select class="form-select" id="ev-context">
-                    <option value="normal">Normal</option>
-                    <option value="breakpoint">Break point</option>
-                    <option value="setpoint">Set point</option>
-                    <option value="matchpoint">Match point</option>
-                    <option value="deuce">Deuce</option>
-                    <option value="advantage">Ventaja</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Duración del punto</label>
-                  <select class="form-select" id="ev-duration">
-                    <option value="short">0-4 golpes</option>
-                    <option value="medium">5-8 golpes</option>
-                    <option value="long">9+ golpes</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Nota del coach</label>
-                  <input type="text" class="form-input" id="ev-note" placeholder="Observación rápida...">
-                </div>
-                <button class="btn btn-primary" style="width:100%;" onclick="registerPoint()">✓ Registrar Punto</button>
-              </div>
+            <div class="live2-divider">VS</div>
 
-              <!-- Live stats mini -->
-              <div class="card">
-                <div class="card-title">Estadísticas del Partido</div>
-                <div id="liveStatsContainer">
-                  <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px 0;">Inicia el partido para ver estadísticas</div>
-                </div>
+            <!-- P2 WINS SIDE -->
+            <div class="live2-side p2-wins" id="live2-side-p2">
+              <div class="live2-side-label p2"><span id="lbl-p2-short">P2</span> gana ↓</div>
+              <div class="live2-btns-grid">
+                <button class="live2-btn ace p2"    onclick="oneClick(2,'ace','serve')"><span class="lbtn-icon">🎯</span><span class="lbtn-label">Ace</span></button>
+                <button class="live2-btn winner p2" onclick="oneClick(2,'winner','forehand')"><span class="lbtn-icon">✅</span><span class="lbtn-label">Winner DH</span></button>
+                <button class="live2-btn winner p2" onclick="oneClick(2,'winner','backhand')"><span class="lbtn-icon">✅</span><span class="lbtn-label">Winner RV</span></button>
+                <button class="live2-btn net p2"    onclick="oneClick(2,'net_winner','volley')"><span class="lbtn-icon">🔝</span><span class="lbtn-label">Punto Red</span></button>
+                <button class="live2-btn return p2" onclick="oneClick(2,'return_winner','return')"><span class="lbtn-icon">↩</span><span class="lbtn-label">Resto ✓</span></button>
+                <button class="live2-btn rally p2"  onclick="oneClick(2,'rally_long','forehand')"><span class="lbtn-icon">🔄</span><span class="lbtn-label">Rally ✓</span></button>
+                <button class="live2-btn ufe p2"    onclick="oneClick(2,'ufe','forehand')"><span class="lbtn-icon">⚠</span><span class="lbtn-label">ENF DH</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn ufe p2"    onclick="oneClick(2,'ufe','backhand')"><span class="lbtn-icon">⚠</span><span class="lbtn-label">ENF RV</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn forced p2" onclick="oneClick(2,'forced_error','forehand')"><span class="lbtn-icon">💥</span><span class="lbtn-label">E. Forzado</span><span class="lbtn-sub">rival falla</span></button>
+                <button class="live2-btn df p2"     onclick="oneClick(2,'double_fault','serve')"><span class="lbtn-icon">✕✕</span><span class="lbtn-label">Doble Falta</span><span class="lbtn-sub">rival saca</span></button>
               </div>
             </div>
           </div>
+
+          <!-- ══ MINI STATS + NOTE ══ -->
+          <div class="live2-bottom-strip">
+            <div class="live2-mini-stats" id="live2-mini-stats"></div>
+            <div class="live2-note-row">
+              <input type="text" class="live2-note-input" id="live2-note" placeholder="📝 Nota rápida del coach (opcional)...">
+              <button class="live2-note-btn" onclick="saveQuickNote()">Guardar nota</button>
+            </div>
+          </div>
+
+          <!-- ══ SERVER TOGGLE ══ -->
+          <div class="live2-server-toggle">
+            <span style="font-size:10px;color:var(--text-muted);letter-spacing:1px;">CAMBIAR SERVIDOR:</span>
+            <button class="live2-srv-btn" id="live2-srv-p1" onclick="selectServer(1)">—</button>
+            <button class="live2-srv-btn" id="live2-srv-p2" onclick="selectServer(2)">—</button>
+          </div>
+
         </div>
       </div>
 
@@ -3089,6 +3369,80 @@ function createMatchOnly() {
 // ============================================================
 // LIVE TRACKING
 // ============================================================
+// Current context for points
+let currentContext = 'normal';
+
+function setContext(ctx) {
+  currentContext = ctx;
+  document.querySelectorAll('.ctx-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('ctx-' + ctx);
+  if (el) el.classList.add('active');
+}
+
+// ONE-CLICK point registration (the main fast-track function)
+function oneClick(winner, type, shot) {
+  if (!currentMatch) return;
+
+  // Haptic feedback on mobile
+  if (navigator.vibrate) navigator.vibrate(30);
+
+  // Flash the winning side
+  const sideEl = document.getElementById(winner === 1 ? 'live2-side-p1' : 'live2-side-p2');
+  if (sideEl) {
+    sideEl.classList.remove('flash');
+    void sideEl.offsetWidth; // reflow
+    sideEl.classList.add('flash');
+    setTimeout(() => sideEl.classList.remove('flash'), 500);
+  }
+
+  const event = {
+    id: uid(),
+    matchId: currentMatch.id,
+    timestamp: new Date().toISOString(),
+    setNumber: liveScore.setNumber,
+    gameNumber: liveScore.gameNumber,
+    winner,
+    server: selectedServer,
+    type,
+    shot,
+    context: currentContext,
+    note: ''
+  };
+
+  db.events.push(event);
+  advanceScore(winner, type);
+
+  // Reset context to normal after big point
+  if (['breakpoint','setpoint','matchpoint'].includes(currentContext)) {
+    setContext('normal');
+  }
+
+  saveLiveState();
+  saveData();
+  renderLive2Scoreboard();
+  renderLive2MiniStats();
+  renderLive2Tape();
+  updateLive2Server();
+}
+
+function saveQuickNote() {
+  const text = document.getElementById('live2-note').value.trim();
+  if (!text || !currentMatch) return;
+  db.notes.push({
+    id: uid(),
+    playerId: '',
+    matchId: currentMatch.id,
+    type: 'tactical',
+    date: new Date().toISOString().split('T')[0],
+    priority: 'medium',
+    text,
+    createdAt: new Date().toISOString()
+  });
+  document.getElementById('live2-note').value = '';
+  saveData();
+  showToast('📝 Nota guardada ✓');
+}
+
 function renderLiveSection() {
   if (!currentMatch) {
     document.getElementById('noMatchWarning').style.display = 'block';
@@ -3098,83 +3452,128 @@ function renderLiveSection() {
   document.getElementById('noMatchWarning').style.display = 'none';
   document.getElementById('liveMatchContent').style.display = 'block';
 
-  // Update player names in selectors
   const p1n = playerName(currentMatch.p1);
   const p2n = playerName(currentMatch.p2);
-  document.getElementById('selectP1Btn').textContent = '🟢 ' + p1n;
-  document.getElementById('selectP2Btn').textContent = p2n + ' 🔵';
-  document.getElementById('serverP1Btn').textContent = p1n + ' saca';
-  document.getElementById('serverP2Btn').textContent = p2n + ' saca';
 
-  renderLiveScoreboard();
-  renderLiveStats();
-  renderEventsLog();
-  updateServerIndicator();
-  populatePlayerSelects(); // for finish modal
+  // Set player names in all live elements
+  document.getElementById('live2-p1-name').textContent = p1n;
+  document.getElementById('live2-p2-name').textContent = p2n;
+  document.getElementById('lbl-p1-short').textContent = p1n.split(' ')[0];
+  document.getElementById('lbl-p2-short').textContent = p2n.split(' ')[0];
+  document.getElementById('live2-srv-p1').textContent = '🎾 ' + p1n.split(' ')[0] + ' saca';
+  document.getElementById('live2-srv-p2').textContent = '🎾 ' + p2n.split(' ')[0] + ' saca';
+
+  renderLive2Scoreboard();
+  renderLive2MiniStats();
+  renderLive2Tape();
+  updateLive2Server();
+  populatePlayerSelects();
 }
 
-function renderLiveScoreboard() {
+function renderLive2Scoreboard() {
   if (!currentMatch) return;
-  const p1n = playerName(currentMatch.p1);
-  const p2n = playerName(currentMatch.p2);
-  document.getElementById('live-p1-name').textContent = p1n;
-  document.getElementById('live-p2-name').textContent = p2n;
 
-  // Score display
   const pts = ['0','15','30','40'];
   let g1 = liveScore.currentGame.p1;
   let g2 = liveScore.currentGame.p2;
-  let display, context = '';
+  let pointsDisplay, contextText = '';
 
   if (!liveScore.isTieBreak) {
     if (g1 >= 3 && g2 >= 3) {
-      if (g1 === g2) { display = 'DEUCE'; context = 'DEUCE'; }
-      else if (g1 > g2) { display = 'ADV P1'; context = 'VENTAJA ' + p1n; }
-      else { display = 'ADV P2'; context = 'VENTAJA ' + p2n; }
+      if (g1 === g2) { pointsDisplay = 'DEUCE'; contextText = 'DEUCE'; }
+      else if (g1 > g2) { pointsDisplay = 'ADV P1'; contextText = 'VENTAJA'; }
+      else { pointsDisplay = 'ADV P2'; contextText = 'VENTAJA'; }
     } else {
-      display = (pts[g1]||g1) + ' - ' + (pts[g2]||g2);
-      context = 'Puntos';
+      pointsDisplay = (pts[g1]||g1) + ' - ' + (pts[g2]||g2);
     }
   } else {
-    display = g1 + ' - ' + g2;
-    context = 'TIE-BREAK';
+    pointsDisplay = g1 + ' - ' + g2;
+    contextText = 'TIE-BREAK';
   }
 
-  document.getElementById('live-score-display').textContent = display;
-  document.getElementById('live-score-context').textContent = context;
-  document.getElementById('live-game-info').textContent = `Juego ${liveScore.gameNumber} · Set ${liveScore.setNumber}`;
+  document.getElementById('live2-points').textContent = pointsDisplay;
+  document.getElementById('live2-context').textContent = contextText;
+  document.getElementById('live2-p1-games').textContent = liveScore.currentSet.p1;
+  document.getElementById('live2-p2-games').textContent = liveScore.currentSet.p2;
+  document.getElementById('ltb-set').textContent = `Set ${liveScore.setNumber} · Juego ${liveScore.gameNumber}`;
 
-  // Sets display
-  const renderSets = (player, sets) => {
-    const el = document.getElementById(`live-${player}-sets`);
-    el.innerHTML = sets.map((s, i) => {
-      const myGames = player === 'p1' ? s.p1 : s.p2;
-      const oppGames = player === 'p1' ? s.p2 : s.p1;
-      const won = myGames > oppGames;
-      return `<div class="score-set-badge ${won?'won':''}">${myGames}</div>`;
-    }).join('') + (liveScore.sets.length < 3 ? `<div class="score-set-badge">${player==='p1'?liveScore.currentSet.p1:liveScore.currentSet.p2}</div>` : '');
+  // Sets chips
+  const renderSetChips = (playerId, elId, pClass) => {
+    const el = document.getElementById(elId);
+    el.innerHTML = liveScore.sets.map(s => {
+      const mine = playerId === 'p1' ? s.p1 : s.p2;
+      const opp  = playerId === 'p1' ? s.p2 : s.p1;
+      const won  = mine > opp;
+      return `<div class="live2-set-chip ${won ? 'won ' + pClass : ''}">${mine}</div>`;
+    }).join('');
   };
-  renderSets('p1', liveScore.sets);
-  renderSets('p2', liveScore.sets);
+  renderSetChips('p1', 'live2-p1-sets', '');
+  renderSetChips('p2', 'live2-p2-sets', 'p2');
 }
 
-function updateServerIndicator() {
-  const p1serve = document.getElementById('serve-p1');
-  const p2serve = document.getElementById('serve-p2');
-  const p1label = document.getElementById('serve-p1-label');
-  const p2label = document.getElementById('serve-p2-label');
-  if (selectedServer === 1) {
-    p1serve.style.display = 'inline-block'; p1label.textContent = 'Saca';
-    p2serve.style.display = 'none'; p2label.textContent = '';
-  } else {
-    p2serve.style.display = 'inline-block'; p2label.textContent = 'Saca';
-    p1serve.style.display = 'none'; p1label.textContent = '';
+function updateLive2Server() {
+  const p1El = document.getElementById('srv-p1');
+  const p2El = document.getElementById('srv-p2');
+  const srv1 = document.getElementById('live2-srv-p1');
+  const srv2 = document.getElementById('live2-srv-p2');
+  if (p1El) p1El.classList.toggle('active', selectedServer === 1);
+  if (p2El) p2El.classList.toggle('active', selectedServer === 2);
+  if (srv1) { srv1.classList.toggle('active-p1', selectedServer === 1); srv1.classList.remove('active-p2'); }
+  if (srv2) { srv2.classList.toggle('active-p2', selectedServer === 2); srv2.classList.remove('active-p1'); }
+}
+
+function renderLive2Tape() {
+  if (!currentMatch) return;
+  const events = db.events.filter(e => e.matchId === currentMatch.id);
+  const tape = document.getElementById('live2-tape');
+  if (!events.length) {
+    tape.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Los puntos aparecerán aquí...</span>';
+    return;
   }
+  const typeLabels = { ace:'Ace', double_fault:'2DF', winner:'Win', ufe:'ENF', forced_error:'EF', net_winner:'Red', return_winner:'Resto✓', return_error:'Resto✗', rally_long:'Rally', rally_medium:'Rally', rally_short:'Punto' };
+  const shotLabels = { serve:'Sq', return:'Rst', forehand:'DH', backhand:'RV', volley:'Vol', smash:'Smh', dropshot:'Dej', lob:'Glb' };
 
-  // Update server buttons state
-  document.getElementById('serverP1Btn').classList.toggle('selected', selectedServer === 1);
-  document.getElementById('serverP2Btn').classList.toggle('selected', selectedServer === 2);
+  tape.innerHTML = [...events].reverse().slice(0, 12).map(ev => {
+    const side = ev.winner === 1 ? 'p1' : 'p2';
+    const pName = ev.winner === 1 ? playerName(currentMatch.p1) : playerName(currentMatch.p2);
+    const shortName = (pName||'?').split(' ')[0];
+    const tl = typeLabels[ev.type] || ev.type;
+    const sl = ev.shot ? shotLabels[ev.shot] || ev.shot : '';
+    return `<div class="live2-tape-chip ${side}">${shortName}: ${tl}${sl?' · '+sl:''}</div>`;
+  }).join('');
+  tape.scrollLeft = 0;
 }
+
+function renderLive2MiniStats() {
+  if (!currentMatch) return;
+  const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+  const p1n = (playerName(currentMatch.p1)||'P1').split(' ')[0];
+  const p2n = (playerName(currentMatch.p2)||'P2').split(' ')[0];
+
+  const miniStat = (label, v1, v2, lowerBetter=false) => {
+    const p1Good = lowerBetter ? v1 <= v2 : v1 >= v2;
+    return `<div class="live2-mini-stat">
+      <div class="live2-mini-stat-val">
+        <span style="color:${p1Good?'var(--accent-green)':'var(--accent-red)'}">${v1}</span>
+        <span style="color:var(--text-muted);font-size:10px;">·</span>
+        <span style="color:${!p1Good?'var(--accent-green)':'var(--accent-red)'}">${v2}</span>
+      </div>
+      <div class="live2-mini-stat-label">${label}</div>
+    </div>`;
+  };
+
+  document.getElementById('live2-mini-stats').innerHTML =
+    miniStat('Winners', stats.p1.winners, stats.p2.winners) +
+    miniStat('ENF', stats.p1.ufe, stats.p2.ufe, true) +
+    miniStat('Aces', stats.p1.aces, stats.p2.aces) +
+    miniStat('2DF', stats.p1.doubleFaults, stats.p2.doubleFaults, true);
+}
+
+// Keep these for backward compat (called from rebuildScore etc.)
+function renderLiveScoreboard() { renderLive2Scoreboard(); }
+function renderLiveStats() { renderLive2MiniStats(); }
+function renderEventsLog() { renderLive2Tape(); }
+function updateServerIndicator() { updateLive2Server(); }
 
 function selectPointWinner(player) {
   selectedPointWinner = player;
