@@ -678,6 +678,71 @@ tbody tr:hover { background: var(--bg-card-hover); }
   padding: 4px;
 }
 
+/* ===== BOTTOM NAV (mobile) ===== */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  z-index: 200;
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 60px;
+}
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 8px;
+  transition: color 0.2s;
+  min-width: 52px;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-item .bnav-icon { font-size: 20px; line-height: 1; }
+.bottom-nav-item.active { color: var(--accent-green); }
+.bottom-nav-more {
+  position: fixed;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  z-index: 199;
+  display: none;
+  flex-direction: column;
+  padding: 8px 0;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.4);
+}
+.bottom-nav-more.open { display: flex; }
+.bottom-nav-more-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.bottom-nav-more-item:active { background: var(--bg-card); }
+.bottom-nav-more-item.active { color: var(--accent-green); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
@@ -690,10 +755,134 @@ tbody tr:hover { background: var(--bg-card-hover); }
 }
 
 @media (max-width: 600px) {
-  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
-  .content-area { padding: 16px; }
-  .score-game { font-size: 40px; }
-  .live-quick-btns { grid-template-columns: repeat(2, 1fr); }
+  /* ---- Layout ---- */
+  .sidebar { display: none !important; }
+  .main-content { margin-left: 0; padding-bottom: 70px; }
+  .bottom-nav { display: block; }
+  .mobile-menu-btn { display: none; }
+
+  /* ---- Topbar ---- */
+  .topbar { padding: 10px 14px; }
+  .topbar-title { font-size: 16px; }
+  .topbar-actions .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .sync-status { display: none; } /* hide on mobile to save space */
+
+  /* ---- Content ---- */
+  .content-area { padding: 12px 12px 80px; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 10px; }
+
+  /* ---- Section header ---- */
+  .section-header { margin-bottom: 14px; }
+  .section-title { font-size: 22px; }
+  .section-header .btn { font-size: 12px; padding: 7px 12px; }
+
+  /* ---- Cards ---- */
+  .card { padding: 14px; }
+  .card-value { font-size: 28px; }
+
+  /* ---- Modals ---- */
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 20px 16px;
+    margin: 0;
+  }
+  .modal-overlay { align-items: flex-end; }
+  .modal-title { font-size: 18px; margin-bottom: 16px; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn { width: 100%; justify-content: center; }
+
+  /* ---- Tables → card rows ---- */
+  .table-wrap { border: none; border-radius: 0; }
+  table thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100%; }
+  tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    position: relative;
+  }
+  td {
+    border: none;
+    padding: 3px 0;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  td::before {
+    content: attr(data-label);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    min-width: 100px;
+  }
+  td:first-child { font-weight: 700; font-size: 14px; padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+  td:first-child::before { display: none; }
+
+  /* ---- Filter bar ---- */
+  .filter-bar { gap: 6px; }
+  .filter-bar .form-select, .filter-bar .form-input { font-size: 12px; padding: 7px 10px; }
+
+  /* ---- Live tracking ---- */
+  .live-scoreboard { padding: 14px; }
+  .score-game { font-size: 38px; letter-spacing: 2px; }
+  .scoreboard-header { gap: 8px; }
+  .score-name { font-size: 12px; }
+  .live-quick-btns { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .quick-btn { padding: 10px 4px; font-size: 11px; }
+  .player-select-btn { padding: 12px 8px; font-size: 13px; }
+  .live-events-log { max-height: 120px; }
+
+  /* ---- Match cards ---- */
+  .match-card { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+  .match-day { font-size: 22px; }
+
+  /* ---- Player cards ---- */
+  .player-card { padding: 14px; }
+
+  /* ---- Insight cards ---- */
+  .insight-card { padding: 14px; }
+  .insight-text { font-size: 13px; }
+
+  /* ---- Export cards ---- */
+  .export-card { padding: 14px 12px; }
+
+  /* ---- Note cards ---- */
+  .note-card { padding: 12px; }
+
+  /* ---- Password screen ---- */
+  .password-box { padding: 32px 20px; }
+  .password-logo { font-size: 28px; }
+
+  /* ---- Tabs ---- */
+  .tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .tab { white-space: nowrap; padding: 10px 14px; font-size: 12px; }
+
+  /* ---- Buttons ---- */
+  .btn { min-height: 40px; }
+  .btn-xl { padding: 14px 20px; font-size: 16px; }
+
+  /* ---- Forms ---- */
+  .form-input, .form-select, .form-textarea { font-size: 16px; } /* prevents iOS zoom */
+
+  /* ---- Grid inside modals ---- */
+  .modal .grid-2 { grid-template-columns: 1fr; gap: 0; }
+
+  /* ---- Scoreboard sets ---- */
+  .score-set-badge { width: 24px; height: 24px; font-size: 12px; }
+
+  /* ---- Live stats container ---- */
+  #liveStatsContainer { font-size: 11px; }
+
+  /* ---- Section live layout ---- */
+  #section-live .grid-2 { grid-template-columns: 1fr; }
 }
 
 /* ===== OVERLAY for mobile sidebar ===== */
@@ -918,6 +1107,37 @@ tbody tr:hover { background: var(--bg-card-hover); }
 
 <!-- SIDEBAR OVERLAY (mobile) -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- BOTTOM NAV (mobile only) -->
+<div class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <div class="bottom-nav-item active" id="bnav-dashboard" onclick="navigate('dashboard');setBottomNav('dashboard')">
+      <span class="bnav-icon">📊</span><span>Inicio</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-live" onclick="navigate('live');setBottomNav('live')">
+      <span class="bnav-icon">🔴</span><span>En Vivo</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-new-match" onclick="navigate('new-match');setBottomNav('new-match')">
+      <span class="bnav-icon">➕</span><span>Partido</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-history" onclick="navigate('history');setBottomNav('history')">
+      <span class="bnav-icon">📋</span><span>Histórico</span>
+    </div>
+    <div class="bottom-nav-item" id="bnav-more" onclick="toggleBottomMore()">
+      <span class="bnav-icon">☰</span><span>Más</span>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV MORE MENU -->
+<div class="bottom-nav-more" id="bottomNavMore">
+  <div class="bottom-nav-more-item" onclick="navigate('players');setBottomNav('players');closeBottomMore()"><span>👤</span> Jugadores</div>
+  <div class="bottom-nav-more-item" onclick="navigate('calendar');setBottomNav('calendar');closeBottomMore()"><span>📅</span> Calendario</div>
+  <div class="bottom-nav-more-item" onclick="navigate('insights');setBottomNav('insights');closeBottomMore()"><span>🧠</span> Coach Insights</div>
+  <div class="bottom-nav-more-item" onclick="navigate('notes');setBottomNav('notes');closeBottomMore()"><span>📝</span> Notas del Coach</div>
+  <div class="bottom-nav-more-item" onclick="navigate('export');setBottomNav('export');closeBottomMore()"><span>💾</span> Exportar / Importar</div>
+  <div class="bottom-nav-more-item" onclick="navigate('settings');setBottomNav('settings');closeBottomMore()"><span>⚙️</span> Configuración</div>
+</div>
 
 <!-- APP LAYOUT -->
 <div class="app-layout">
@@ -2250,7 +2470,10 @@ function navigate(section) {
   if (section === 'notes') { populateNoteFilters(); renderNotes(); }
   if (section === 'settings') refreshSettings();
 
+  // Sync bottom nav highlight
+  setBottomNav(section);
   closeSidebar();
+  closeBottomMore();
 }
 
 function openSidebar() {
@@ -2261,6 +2484,31 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
 }
+
+function setBottomNav(section) {
+  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('bnav-' + section);
+  if (el) el.classList.add('active');
+  else document.getElementById('bnav-more')?.classList.add('active');
+}
+
+function toggleBottomMore() {
+  const menu = document.getElementById('bottomNavMore');
+  menu.classList.toggle('open');
+}
+
+function closeBottomMore() {
+  document.getElementById('bottomNavMore')?.classList.remove('open');
+}
+
+// Close more menu on outside tap
+document.addEventListener('click', e => {
+  const more = document.getElementById('bottomNavMore');
+  const btn = document.getElementById('bnav-more');
+  if (more && btn && !more.contains(e.target) && !btn.contains(e.target)) {
+    more.classList.remove('open');
+  }
+});
 
 function setDefaultDate() {
   const today = new Date().toISOString().split('T')[0];
@@ -3316,17 +3564,17 @@ function renderHistory() {
         const wn = m.winnerId ? playerName(m.winnerId) : '—';
         const s = m.stats || { p1: {}, p2: {} };
         return `<tr>
-          <td>${formatDate(m.date)}</td>
-          <td style="font-weight:600;">${p1n} <span style="color:var(--text-muted);">vs</span> ${p2n}</td>
-          <td><span class="badge badge-gray">${m.result || '—'}</span></td>
-          <td style="font-weight:600;color:var(--accent-green);">${wn}</td>
-          <td>${surfaceLabel(m.surface)}</td>
-          <td>${typeLabel(m.matchType)}</td>
-          <td style="color:${(s.p1.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p1?.ufe ?? '—'}</td>
-          <td style="color:${(s.p2.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p2?.ufe ?? '—'}</td>
-          <td style="color:var(--accent-green);">${s.p1?.winners ?? '—'}</td>
-          <td style="color:var(--accent-blue);">${s.p2?.winners ?? '—'}</td>
-          <td>
+          <td>${p1n} <span style="color:var(--text-muted);">vs</span> ${p2n}</td>
+          <td data-label="Fecha">${formatDate(m.date)}</td>
+          <td data-label="Resultado"><span class="badge badge-gray">${m.result || '—'}</span></td>
+          <td data-label="Ganador" style="font-weight:600;color:var(--accent-green);">${wn}</td>
+          <td data-label="Superficie">${surfaceLabel(m.surface)}</td>
+          <td data-label="Tipo">${typeLabel(m.matchType)}</td>
+          <td data-label="ENF P1" style="color:${(s.p1.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p1?.ufe ?? '—'}</td>
+          <td data-label="ENF P2" style="color:${(s.p2.ufe||0)>15?'var(--accent-red)':'var(--text-primary)'};">${s.p2?.ufe ?? '—'}</td>
+          <td data-label="Win P1" style="color:var(--accent-green);">${s.p1?.winners ?? '—'}</td>
+          <td data-label="Win P2" style="color:var(--accent-blue);">${s.p2?.winners ?? '—'}</td>
+          <td data-label="Acciones">
             <div style="display:flex;gap:4px;">
               <button class="btn btn-secondary btn-sm" onclick="openMatchDetail('${m.id}')">👁</button>
               <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">🗑</button>
