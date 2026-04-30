@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tennis Coach Tracker</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='28' cy='24' rx='18' ry='20' fill='none' stroke='%2300e676' stroke-width='4'/%3E%3Cline x1='28' y1='4' x2='28' y2='44' stroke='%2300e676' stroke-width='2'/%3E%3Cline x1='10' y1='24' x2='46' y2='24' stroke='%2300e676' stroke-width='2'/%3E%3Cline x1='13' y1='12' x2='43' y2='36' stroke='%2300e676' stroke-width='1.5'/%3E%3Cline x1='43' y1='12' x2='13' y2='36' stroke='%2300e676' stroke-width='1.5'/%3E%3Crect x='24' y='43' width='8' height='14' rx='3' fill='%2300e676'/%3E%3Crect x='20' y='55' width='16' height='5' rx='2' fill='%2300c853'/%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -788,8 +789,20 @@ tbody tr:hover { background: var(--bg-card-hover); }
   <!-- SIDEBAR -->
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-text">🎾 TCT</div>
-      <div class="logo-sub">Tennis Coach Tracker</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="28" cy="24" rx="18" ry="20" fill="none" stroke="#00e676" stroke-width="4"/>
+          <line x1="28" y1="4" x2="28" y2="44" stroke="#00e676" stroke-width="2"/>
+          <line x1="10" y1="24" x2="46" y2="24" stroke="#00e676" stroke-width="2"/>
+          <line x1="13" y1="12" x2="43" y2="36" stroke="#00e676" stroke-width="1.5"/>
+          <line x1="43" y1="12" x2="13" y2="36" stroke="#00e676" stroke-width="1.5"/>
+          <rect x="24" y="43" width="8" height="14" rx="3" fill="#00e676"/>
+          <rect x="20" y="55" width="16" height="5" rx="2" fill="#00c853"/>
+        </svg>
+        <div class="logo-text">EDL</div>
+      </div>
+      <div style="font-size:9px;color:var(--accent-green);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-top:3px;">Emmanuel Diez Lopez</div>
+      <div class="logo-sub" style="margin-top:1px;">Tennis Coach Tracker</div>
     </div>
 
     <div class="nav-menu">
