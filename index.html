@@ -1112,7 +1112,68 @@ tbody tr:hover { background: var(--bg-card-hover); }
 }
 .password-btn:hover { background: #00ff87; transform: translateY(-1px); }
 
-/* ===== PLAYER TYPE TOGGLE ===== */
+/* ===== NEW MATCH COMPACT LAYOUT ===== */
+#section-new-match .section-header { margin-bottom: 16px; }
+
+.nm-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.nm-col { display: flex; flex-direction: column; gap: 14px; }
+
+.nm-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.nm-block:hover { border-color: var(--border-light); }
+
+.nm-block-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.nm-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.nm-row:last-child { margin-bottom: 0; }
+.nm-field { display: flex; flex-direction: column; gap: 5px; }
+
+.nm-objectives-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.nm-objectives-grid label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-primary);
+  padding: 4px 0;
+}
+.nm-objectives-grid label input[type="checkbox"] { accent-color: var(--accent-green); width: 14px; height: 14px; flex-shrink: 0; }
+
+.nm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .nm-layout { grid-template-columns: 1fr; }
+  .nm-actions .btn { flex: 1; }
+}
 .player-type-btn {
   flex: 1;
   padding: 10px;
@@ -1191,9 +1252,9 @@ tbody tr:hover { background: var(--bg-card-hover); }
 /* ===== LIVE2 TRACKING UI ===== */
 
 /* ================================================================
-   LIVE TRACKING — FULL-SCREEN, NO SCROLL
+   LIVE TRACKING — FULL-SCREEN, NO SCROLL (only when active)
    ================================================================ */
-#section-live {
+#section-live.active {
   margin: -24px;
   height: calc(100vh - 56px);
   display: flex;
@@ -1201,7 +1262,7 @@ tbody tr:hover { background: var(--bg-card-hover); }
   overflow: hidden;
 }
 @media (max-width: 600px) {
-  #section-live { margin: -12px -12px 0; height: calc(100vh - 56px - 60px); }
+  #section-live.active { margin: -12px -12px 0; height: calc(100vh - 56px - 60px); }
 }
 
 /* Top bar */
@@ -1470,7 +1531,6 @@ tbody tr:hover { background: var(--bg-card-hover); }
 
       <div class="nav-section-label">Partido</div>
       <div class="nav-item" onclick="navigate('new-match')"><span class="nav-icon">➕</span> Nuevo Partido</div>
-      <div class="nav-item" onclick="navigate('live')"><span class="nav-icon">🔴</span> Seguimiento Vivo</div>
       <div class="nav-item" onclick="navigate('history')"><span class="nav-icon">📋</span> Histórico</div>
 
       <div class="nav-section-label">Análisis</div>
@@ -1629,70 +1689,74 @@ tbody tr:hover { background: var(--bg-card-hover); }
           <div class="section-title">Nuevo Partido</div>
         </div>
 
-        <div class="grid-2">
-          <div>
-            <div class="card" style="margin-bottom:16px;">
-              <div class="card-title">Jugadores</div>
+        <!-- compact 2-col layout -->
+        <div class="nm-layout">
+
+          <!-- LEFT: Players + Details -->
+          <div class="nm-col">
+            <div class="nm-block">
+              <div class="nm-block-title">Jugadores</div>
               <div class="form-group">
                 <label class="form-label">Jugador 1</label>
-                <select class="form-select" id="nm-p1">
-                  <option value="">Seleccionar jugador...</option>
-                </select>
+                <select class="form-select" id="nm-p1"><option value="">Seleccionar jugador...</option></select>
               </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label">Jugador 2</label>
-                <select class="form-select" id="nm-p2">
-                  <option value="">Seleccionar jugador...</option>
-                </select>
+                <select class="form-select" id="nm-p2"><option value="">Seleccionar jugador...</option></select>
               </div>
             </div>
 
-            <div class="card" style="margin-bottom:16px;">
-              <div class="card-title">Detalles</div>
-              <div class="form-group">
-                <label class="form-label">Fecha</label>
-                <input type="date" class="form-input" id="nm-date">
+            <div class="nm-block">
+              <div class="nm-block-title">Detalles</div>
+              <div class="nm-row">
+                <div class="nm-field">
+                  <label class="form-label">Fecha</label>
+                  <input type="date" class="form-input" id="nm-date">
+                </div>
+                <div class="nm-field">
+                  <label class="form-label">Hora</label>
+                  <input type="time" class="form-input" id="nm-time">
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Hora</label>
-                <input type="time" class="form-input" id="nm-time">
-              </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label">Lugar</label>
-                <input type="text" class="form-input" id="nm-place" placeholder="Nombre del club / pista">
+                <input type="text" class="form-input" id="nm-place" placeholder="Club / pista">
               </div>
             </div>
           </div>
 
-          <div>
-            <div class="card" style="margin-bottom:16px;">
-              <div class="card-title">Configuración del partido</div>
+          <!-- RIGHT: Config + Objectives + Actions -->
+          <div class="nm-col">
+            <div class="nm-block">
+              <div class="nm-block-title">Configuración</div>
               <div class="form-group">
                 <label class="form-label">Torneo</label>
                 <select class="form-select" id="nm-tournament" onchange="onTournamentChange()">
-                  <option value="">Sin torneo (entrenamiento/amistoso)</option>
+                  <option value="">Sin torneo</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label class="form-label">Superficie</label>
-                <select class="form-select" id="nm-surface">
-                  <option value="hard">Dura</option>
-                  <option value="clay">Tierra batida</option>
-                  <option value="grass">Hierba</option>
-                  <option value="indoor">Indoor</option>
-                  <option value="other">Otra</option>
-                </select>
+              <div class="nm-row">
+                <div class="nm-field">
+                  <label class="form-label">Superficie</label>
+                  <select class="form-select" id="nm-surface">
+                    <option value="hard">Dura</option>
+                    <option value="clay">Tierra batida</option>
+                    <option value="grass">Hierba</option>
+                    <option value="indoor">Indoor</option>
+                    <option value="other">Otra</option>
+                  </select>
+                </div>
+                <div class="nm-field">
+                  <label class="form-label">Tipo</label>
+                  <select class="form-select" id="nm-type">
+                    <option value="training">Entrenamiento</option>
+                    <option value="competition">Competición</option>
+                    <option value="friendly">Amistoso</option>
+                    <option value="tournament">Torneo</option>
+                  </select>
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">Tipo de partido</label>
-                <select class="form-select" id="nm-type">
-                  <option value="training">Entrenamiento</option>
-                  <option value="competition">Competición</option>
-                  <option value="friendly">Amistoso</option>
-                  <option value="tournament">Torneo</option>
-                </select>
-              </div>
-              <div class="form-group">
+              <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label">Formato</label>
                 <select class="form-select" id="nm-format">
                   <option value="bo3">Mejor de 3 sets</option>
@@ -1703,41 +1767,35 @@ tbody tr:hover { background: var(--bg-card-hover); }
               </div>
             </div>
 
-            <div class="card" style="margin-bottom:16px;">
-              <div class="card-title">Objetivos del partido</div>
-              <div id="nm-objectives" style="display:flex;flex-wrap:wrap;gap:8px;">
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="first_serve"> Mejorar primer saque</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="reduce_ufe"> Reducir errores no forzados</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="net"> Subir más a la red</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="aggressive"> Ser más agresivo al resto</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" value="big_points"> Mejorar puntos importantes</label>
+            <div class="nm-block">
+              <div class="nm-block-title">Objetivos</div>
+              <div class="nm-objectives-grid">
+                <label><input type="checkbox" value="first_serve"> Mejorar primer saque</label>
+                <label><input type="checkbox" value="reduce_ufe"> Reducir errores</label>
+                <label><input type="checkbox" value="net"> Subir a la red</label>
+                <label><input type="checkbox" value="aggressive"> Agresivo al resto</label>
+                <label><input type="checkbox" value="big_points"> Puntos importantes</label>
               </div>
-              <div class="form-group" style="margin-top:12px;margin-bottom:0;">
+              <div id="nm-objectives" style="display:none;"></div>
+              <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label">Notas previas del coach</label>
-                <textarea class="form-textarea" id="nm-notes" placeholder="Observaciones antes del partido..."></textarea>
+                <textarea class="form-textarea" id="nm-notes" placeholder="Observaciones antes del partido..." style="min-height:60px;"></textarea>
               </div>
             </div>
 
-            <div style="display:flex;gap:10px;">
-              <button class="btn btn-primary btn-lg" style="flex:1;" onclick="createMatchAndTrack()">🎾 Iniciar Seguimiento</button>
-              <button class="btn btn-secondary btn-lg" onclick="createMatchOnly()">Guardar sin iniciar</button>
+            <div class="nm-actions">
+              <button class="btn btn-primary btn-lg" style="flex:2;" onclick="createMatchAndTrack()">🎾 Iniciar Seguimiento</button>
+              <button class="btn btn-secondary btn-lg" style="flex:1;" onclick="createMatchOnly()">Guardar sin iniciar</button>
             </div>
           </div>
+
         </div>
       </div>
 
       <!-- ==================== LIVE TRACKING ==================== -->
       <div class="section" id="section-live">
 
-        <!-- No match warning -->
-        <div id="noMatchWarning" style="display:none;">
-          <div class="empty-state" style="padding-top:80px;">
-            <div class="empty-state-icon">🎾</div>
-            <div class="empty-state-title">Sin partido activo</div>
-            <div class="empty-state-text">Crea un nuevo partido para iniciar el seguimiento en directo</div>
-            <button class="btn btn-primary btn-lg" onclick="navigate('new-match')">+ Nuevo Partido</button>
-          </div>
-        </div>
+        <div id="noMatchWarning" style="display:none;"></div>
 
         <div id="liveMatchContent">
 
@@ -3559,7 +3617,7 @@ function createMatchAndTrack() {
   if (!p1 || !p2) { showToast('Selecciona ambos jugadores', 'error'); return; }
   if (p1 === p2) { showToast('Los jugadores deben ser diferentes', 'error'); return; }
 
-  const objectives = Array.from(document.querySelectorAll('#nm-objectives input:checked')).map(i => i.value);
+  const objectives = Array.from(document.querySelectorAll('.nm-objectives-grid input:checked')).map(i => i.value);
 
   currentMatch = {
     id: uid(),
@@ -3602,7 +3660,7 @@ function createMatchOnly() {
     matchType: document.getElementById('nm-type').value,
     format: document.getElementById('nm-format').value,
     preNotes: document.getElementById('nm-notes').value,
-    objectives: Array.from(document.querySelectorAll('#nm-objectives input:checked')).map(i => i.value),
+    objectives: Array.from(document.querySelectorAll('.nm-objectives-grid input:checked')).map(i => i.value),
     tournamentId: document.getElementById('nm-tournament')?.value || '',
     status: 'pending',
     createdAt: new Date().toISOString()
@@ -3693,8 +3751,11 @@ function saveQuickNote() {
 
 function renderLiveSection() {
   if (!currentMatch) {
-    document.getElementById('noMatchWarning').style.display = 'block';
+    document.getElementById('noMatchWarning').style.display = 'none';
     document.getElementById('liveMatchContent').style.display = 'none';
+    // Redirect to new match
+    navigate('new-match');
+    showToast('Crea un partido para iniciar el seguimiento', 'info');
     return;
   }
   document.getElementById('noMatchWarning').style.display = 'none';
