@@ -2667,12 +2667,76 @@ tbody tr:hover { background: var(--bg-card-hover); }
     <div id="matchDetailContent"></div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('matchDetailModal')">Cerrar</button>
-      <button class="btn btn-blue" onclick="exportMatchReportHTML()">📄 Exportar Informe</button>
+      <button class="btn btn-secondary" onclick="openEditMatchModal(currentDetailMatchId);closeModal('matchDetailModal')">✏ Editar</button>
+      <button class="btn btn-blue" onclick="exportMatchReportPDF()">🖨️ Exportar PDF</button>
     </div>
   </div>
 </div>
 
-<!-- Player Detail Modal -->
+<!-- Edit Match Modal -->
+<div class="modal-overlay" id="editMatchModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title">Editar Partido</div>
+    <input type="hidden" id="em-id">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="em-date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input type="time" class="form-input" id="em-time">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Lugar</label>
+      <input type="text" class="form-input" id="em-place" placeholder="Club / pista">
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Superficie</label>
+        <select class="form-select" id="em-surface">
+          <option value="hard">Dura</option>
+          <option value="clay">Tierra batida</option>
+          <option value="grass">Hierba</option>
+          <option value="indoor">Indoor</option>
+          <option value="other">Otra</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="em-type">
+          <option value="training">Entrenamiento</option>
+          <option value="competition">Competición</option>
+          <option value="friendly">Amistoso</option>
+          <option value="tournament">Torneo</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Resultado</label>
+      <input type="text" class="form-input" id="em-result" placeholder="6-4, 6-3">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ganador</label>
+      <select class="form-select" id="em-winner"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas previas</label>
+      <textarea class="form-textarea" id="em-prenotes" placeholder="Notas antes del partido..." style="min-height:60px;"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas post-partido</label>
+      <textarea class="form-textarea" id="em-postnotes" placeholder="Resumen del partido..." style="min-height:60px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('editMatchModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditMatch()">✓ Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Match Modal -->
 <div class="modal-overlay" id="playerDetailModal">
   <div class="modal" style="max-width:700px;">
     <div id="playerDetailContent"></div>
@@ -3948,16 +4012,17 @@ function renderCalendar() {
           <div class="match-day">${d.getDate()}</div>
           <div class="match-month">${d.toLocaleDateString('es-ES',{month:'short'})}</div>
         </div>
-        <div class="match-info">
+        <div class="match-info" style="cursor:pointer;" onclick="${m.status==='finished'?`openMatchDetail('${m.id}')`:`openCalendarMatchModal('${m.id}')`}">
           <div class="match-players">${p1n} vs ${p2n}</div>
           <div class="match-details">${m.time||''} ${m.place?'· '+m.place:''} · ${surfaceLabel(m.surface)} · ${typeLabel(m.matchType)}</div>
           ${m.preNotes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${m.preNotes}</div>` : ''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           ${statusBadge(m.status)}
-          <div style="display:flex;gap:6px;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
             ${m.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="startMatchFromCalendar('${m.id}')">▶ Iniciar</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="openCalendarMatchModal('${m.id}')">✏</button>
+            ${m.status === 'finished' ? `<button class="btn btn-blue btn-sm" onclick="openMatchDetail('${m.id}')">👁 Ver</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="openCalendarMatchModal('${m.id}')">✏ Editar</button>
             <button class="btn btn-danger btn-sm" onclick="deleteCalendarMatch('${m.id}')">🗑</button>
           </div>
         </div>
@@ -4750,6 +4815,7 @@ function renderHistory() {
           <td data-label="Acciones">
             <div style="display:flex;gap:4px;">
               <button class="btn btn-secondary btn-sm" onclick="openMatchDetail('${m.id}')">👁</button>
+              <button class="btn btn-blue btn-sm" onclick="openEditMatchModal('${m.id}')">✏</button>
               <button class="btn btn-danger btn-sm" onclick="deleteMatch('${m.id}')">🗑</button>
             </div>
           </td>
@@ -4768,6 +4834,58 @@ function deleteMatch(id) {
 }
 
 let currentDetailMatchId = null;
+
+function openEditMatchModal(id) {
+  const m = db.matches.find(x => x.id === id);
+  if (!m) return;
+
+  document.getElementById('em-id').value = m.id;
+  document.getElementById('em-date').value = m.date || '';
+  document.getElementById('em-time').value = m.time || '';
+  document.getElementById('em-place').value = m.place || '';
+  document.getElementById('em-surface').value = m.surface || 'hard';
+  document.getElementById('em-type').value = m.matchType || 'training';
+  document.getElementById('em-result').value = m.result || '';
+  document.getElementById('em-prenotes').value = m.preNotes || '';
+  document.getElementById('em-postnotes').value = m.postNotes || '';
+
+  // Populate winner select
+  const fw = document.getElementById('em-winner');
+  fw.innerHTML = '<option value="">Sin ganador</option>';
+  const p1n = playerName(m.p1); const p2n = playerName(m.p2);
+  if (m.p1) { const o = document.createElement('option'); o.value=m.p1; o.textContent=p1n+' (P1)'; fw.appendChild(o); }
+  if (m.p2) { const o = document.createElement('option'); o.value=m.p2; o.textContent=p2n+' (P2)'; fw.appendChild(o); }
+  fw.value = m.winnerId || '';
+
+  openModal('editMatchModal');
+}
+
+function saveEditMatch() {
+  const id = document.getElementById('em-id').value;
+  const idx = db.matches.findIndex(m => m.id === id);
+  if (idx === -1) return;
+
+  db.matches[idx] = {
+    ...db.matches[idx],
+    date:      document.getElementById('em-date').value,
+    time:      document.getElementById('em-time').value,
+    place:     document.getElementById('em-place').value,
+    surface:   document.getElementById('em-surface').value,
+    matchType: document.getElementById('em-type').value,
+    result:    document.getElementById('em-result').value,
+    winnerId:  document.getElementById('em-winner').value || null,
+    preNotes:  document.getElementById('em-prenotes').value,
+    postNotes: document.getElementById('em-postnotes').value,
+  };
+
+  saveData();
+  closeModal('editMatchModal');
+  showToast('Partido actualizado ✓');
+  // Refresh whichever view is active
+  renderHistory();
+  renderCalendar();
+  refreshDashboard();
+}
 
 function openMatchDetail(id) {
   currentDetailMatchId = id;
@@ -5932,66 +6050,123 @@ function saveSettings() {
 }
 
 // ============================================================
-// EXPORT MATCH REPORT HTML
+// EXPORT MATCH REPORT — PDF via print
 // ============================================================
-function exportMatchReportHTML() {
+function exportMatchReportPDF() {
   if (!currentDetailMatchId) return;
   const m = db.matches.find(x => x.id === currentDetailMatchId);
   if (!m) return;
-  const s = m.stats || { p1: {}, p2: {} };
+
+  const s   = m.stats || { p1:{}, p2:{} };
   const p1n = playerName(m.p1) || '?';
   const p2n = playerName(m.p2) || '?';
-  const wn = m.winnerId ? playerName(m.winnerId) : '—';
-  const matchNotes = db.notes.filter(n => n.matchId === m.id);
+  const wn  = m.winnerId ? playerName(m.winnerId) : '—';
+  const t   = getTournament(m.tournamentId);
 
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe Partido - ${p1n} vs ${p2n}</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; }
-    h1 { color: #1a1a1a; border-bottom: 3px solid #00c853; padding-bottom: 12px; }
-    h2 { color: #333; font-size: 16px; margin-top: 24px; text-transform: uppercase; letter-spacing: 1px; }
-    .header { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
-    .result { font-size: 28px; font-weight: bold; color: #1a1a1a; }
-    .winner { color: #00c853; font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-    th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #f5f5f5; font-size: 12px; text-transform: uppercase; color: #666; }
-    .p1 { color: #00c853; } .p2 { color: #1565c0; }
-    @media print { body { margin: 0; } }
-  </style></head><body>
-  <div class="header">
-    <h1>🎾 Informe de Partido</h1>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div><strong>Jugadores:</strong> ${p1n} vs ${p2n}<br>
-      <strong>Fecha:</strong> ${formatDate(m.date)}<br>
-      <strong>Lugar:</strong> ${m.place||'—'}</div>
-      <div><strong>Superficie:</strong> ${surfaceLabel(m.surface)}<br>
-      <strong>Tipo:</strong> ${typeLabel(m.matchType)}<br>
-      <strong>Formato:</strong> ${m.format||'—'}</div>
+  // Player insights
+  const p1Player = db.players.find(x => x.id === m.p1);
+  const p2Player = db.players.find(x => x.id === m.p2);
+  const SHOT_L = { serve:'Saque', forehand_ground:'Derecha de fondo', backhand_ground:'Revés de fondo', forehand_volley:'Volea derecha', backhand_volley:'Volea revés', smash:'Remate' };
+
+  const playerBlock = (player, stats, pn) => {
+    if (!player) return '';
+    return `<div style="background:#f9f9f9;border:1px solid #ddd;border-left:4px solid ${player.playerType==='opponent'?'#1a56db':'#009944'};border-radius:6px;padding:12px 14px;margin:6px 0;">
+      <div style="font-weight:700;font-size:15px;color:${player.playerType==='opponent'?'#1a56db':'#009944'};">${pn}</div>
+      ${player.winnerShots?.length?`<div style="font-size:12px;margin-top:4px;"><strong>🏆 Golpes ganadores:</strong> ${player.winnerShots.map(s=>SHOT_L[s]||s).join(', ')}</div>`:''}
+      ${player.worstShot?`<div style="font-size:12px;"><strong>⚠ Peor golpe:</strong> ${SHOT_L[player.worstShot]||player.worstShot}</div>`:''}
+      ${player.strengths?`<div style="font-size:12px;"><strong>Fortalezas:</strong> ${player.strengths}</div>`:''}
+      ${player.weaknesses?`<div style="font-size:12px;"><strong>Debilidades:</strong> ${player.weaknesses}</div>`:''}
+    </div>`;
+  };
+
+  // Events summary
+  const events = db.events.filter(e => e.matchId === m.id);
+  const typeL  = { ace:'Ace', double_fault:'Doble Falta', winner:'Winner', ufe:'Error NF', forced_error:'E. Forzado', net_winner:'Punto Red', return_winner:'Resto ✓', return_error:'Resto ✗', rally_long:'Rally Largo', rally_medium:'Rally Medio', rally_short:'Rally Corto' };
+  const shotL  = { serve:'Saque', return:'Resto', forehand:'DH', backhand:'RV', volley:'Volea', smash:'Remate', dropshot:'Dejada', lob:'Globo' };
+  const evRows = events.slice(0,50).map((ev,i) => `<tr style="${i%2===0?'':'background:#fafafa'}">
+    <td>${i+1}</td>
+    <td>S${ev.setNumber} J${ev.gameNumber}</td>
+    <td style="color:${ev.winner===1?'#009944':'#1a56db'};font-weight:600;">${ev.winner===1?p1n:p2n}</td>
+    <td>${typeL[ev.type]||ev.type||''}</td>
+    <td>${shotL[ev.shot]||ev.shot||''}</td>
+    <td style="color:#888;font-size:11px;">${ev.note||''}</td>
+  </tr>`).join('');
+
+  const coach = db.settings?.coachName || 'Emmanuel Diez Lopez';
+  const today = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe — ${p1n} vs ${p2n}</title>
+  ${buildPDFStyles()}
+  </head><body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Guardar como PDF</button>
+  <div class="page">
+    <!-- COVER -->
+    <div class="cover">
+      <div class="cover-logo">EDL</div>
+      <div class="cover-sub">Tennis Coach Tracker</div>
+      <div class="cover-title">${p1n} vs ${p2n}</div>
+      <div class="cover-meta">
+        ${formatDate(m.date)}${m.time?' · '+m.time:''} ${m.place?'· '+m.place:''}<br>
+        ${surfaceLabel(m.surface)} · ${typeLabel(m.matchType)}${t?' · '+t.name:''}<br><br>
+        Coach: <strong>${coach}</strong> · Generado el ${today}
+      </div>
     </div>
-    <div style="margin-top:16px;">
-      <div class="result">${m.result||'—'}</div>
-      <div class="winner">Ganador: ${wn}</div>
+
+    <!-- RESULT -->
+    <div style="text-align:center;padding:20px 0;border-bottom:1px solid #eee;margin-bottom:24px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:4px;">${m.result||'—'}</div>
+      <div style="font-size:16px;font-weight:700;color:#009944;margin-top:4px;">Ganador: ${wn}</div>
     </div>
+
+    <!-- STATS -->
+    <h2>Estadísticas del partido</h2>
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+      <div class="kpi blue"><div class="kpi-val">${s.p1?.pointsWon||0} / ${s.p2?.pointsWon||0}</div><div class="kpi-label">Puntos totales</div></div>
+      <div class="kpi green"><div class="kpi-val">${s.p1?.winners||0} / ${s.p2?.winners||0}</div><div class="kpi-label">Winners</div></div>
+      <div class="kpi red"><div class="kpi-val">${s.p1?.ufe||0} / ${s.p2?.ufe||0}</div><div class="kpi-label">Errores NF</div></div>
+      <div class="kpi orange"><div class="kpi-val">${s.p1?.aces||0} / ${s.p2?.aces||0}</div><div class="kpi-label">Aces</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Estadística</th><th style="color:#009944;">${p1n}</th><th style="color:#1a56db;">${p2n}</th></tr></thead>
+      <tbody>
+        <tr><td>Aces</td><td>${s.p1?.aces||0}</td><td>${s.p2?.aces||0}</td></tr>
+        <tr style="background:#fafafa"><td>Dobles faltas</td><td>${s.p1?.doubleFaults||0}</td><td>${s.p2?.doubleFaults||0}</td></tr>
+        <tr><td>Winners</td><td><strong>${s.p1?.winners||0}</strong></td><td><strong>${s.p2?.winners||0}</strong></td></tr>
+        <tr style="background:#fafafa"><td>Errores no forzados</td><td>${s.p1?.ufe||0}</td><td>${s.p2?.ufe||0}</td></tr>
+        <tr><td>Errores forzados</td><td>${s.p1?.forcedErrors||0}</td><td>${s.p2?.forcedErrors||0}</td></tr>
+        <tr style="background:#fafafa"><td>Puntos en red</td><td>${s.p1?.netPoints||0}</td><td>${s.p2?.netPoints||0}</td></tr>
+        <tr><td>Restos ganadores</td><td>${s.p1?.returnWinners||0}</td><td>${s.p2?.returnWinners||0}</td></tr>
+        <tr style="background:#fafafa"><td>Puntos totales</td><td><strong>${s.p1?.pointsWon||0}</strong></td><td><strong>${s.p2?.pointsWon||0}</strong></td></tr>
+        <tr><td>Ratio Winners/ENF</td>
+          <td>${s.p1?.ufe>0?((s.p1?.winners||0)/s.p1.ufe).toFixed(2):'—'}</td>
+          <td>${s.p2?.ufe>0?((s.p2?.winners||0)/s.p2.ufe).toFixed(2):'—'}</td></tr>
+      </tbody>
+    </table>
+
+    <!-- PLAYER PROFILES -->
+    ${p1Player||p2Player ? `<h2>Perfil de jugadores</h2>${playerBlock(p1Player,s.p1,p1n)}${playerBlock(p2Player,s.p2,p2n)}` : ''}
+
+    <!-- NOTES -->
+    ${m.preNotes||m.postNotes ? `<h2>Notas del coach</h2>
+      ${m.preNotes?`<p style="font-size:13px;margin-bottom:8px;"><strong>Previas:</strong> ${m.preNotes}</p>`:''}
+      ${m.postNotes?`<p style="font-size:13px;"><strong>Post-partido:</strong> ${m.postNotes}</p>`:''}` : ''}
+
+    <!-- EVENTS -->
+    ${events.length ? `<div class="page-break"></div><h2>Registro punto a punto${events.length>50?' (primeros 50 puntos)':''}</h2>
+    <table>
+      <thead><tr><th>#</th><th>Set/Juego</th><th>Ganador</th><th>Tipo</th><th>Golpe</th><th>Nota</th></tr></thead>
+      <tbody>${evRows}</tbody>
+    </table>` : ''}
+
+    <div class="footer">Tennis Coach Tracker · ${coach} · Generado el ${today}</div>
   </div>
-  <h2>Estadísticas</h2>
-  <table>
-    <tr><th>Estadística</th><th class="p1">${p1n}</th><th class="p2">${p2n}</th></tr>
-    <tr><td>Aces</td><td class="p1">${s.p1?.aces||0}</td><td class="p2">${s.p2?.aces||0}</td></tr>
-    <tr><td>Dobles faltas</td><td class="p1">${s.p1?.doubleFaults||0}</td><td class="p2">${s.p2?.doubleFaults||0}</td></tr>
-    <tr><td>Winners</td><td class="p1">${s.p1?.winners||0}</td><td class="p2">${s.p2?.winners||0}</td></tr>
-    <tr><td>Errores no forzados</td><td class="p1">${s.p1?.ufe||0}</td><td class="p2">${s.p2?.ufe||0}</td></tr>
-    <tr><td>Errores forzados</td><td class="p1">${s.p1?.forcedErrors||0}</td><td class="p2">${s.p2?.forcedErrors||0}</td></tr>
-    <tr><td>Puntos en red</td><td class="p1">${s.p1?.netPoints||0}</td><td class="p2">${s.p2?.netPoints||0}</td></tr>
-    <tr><td>Puntos totales</td><td class="p1">${s.p1?.pointsWon||0}</td><td class="p2">${s.p2?.pointsWon||0}</td></tr>
-  </table>
-  ${m.preNotes ? `<h2>Notas previas</h2><p>${m.preNotes}</p>` : ''}
-  ${m.postNotes ? `<h2>Notas post-partido</h2><p>${m.postNotes}</p>` : ''}
-  <p style="color:#999;font-size:11px;margin-top:40px;">Generado con Tennis Coach Tracker · ${new Date().toLocaleDateString('es-ES')}</p>
   </body></html>`;
 
-  downloadFile(`informe_${p1n}_vs_${p2n}_${m.date}.html`, html, 'text/html');
-  showToast('Informe exportado ✓');
+  openPrintWindow(html, `Informe_${p1n}_vs_${p2n}_${m.date}`);
 }
+
+// Keep old name as alias for backward compat
+function exportMatchReportHTML() { exportMatchReportPDF(); }
 
 // ============================================================
 // KEYBOARD SHORTCUTS
