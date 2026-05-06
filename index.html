@@ -8,6 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* ===== CSS VARIABLES & RESET ===== */
@@ -1490,33 +1492,54 @@ tbody tr:hover { background: var(--bg-card-hover); }
 
 /* ── MOBILE OVERRIDES ── */
 @media (max-width: 600px) {
-  /* Scoreboard: tighter but still readable */
+  /* Scoreboard */
   .live2-scoreboard { padding: 8px 12px; gap: 4px; }
   .live2-name { font-size: 15px; max-width: 90px; letter-spacing: 1px; }
   .live2-games { font-size: 40px; }
   .live2-points { font-size: 20px; letter-spacing: 2px; }
   .live2-context { font-size: 9px; min-height: 12px; margin: 2px 0; }
   .live2-set-chip { font-size: 11px; padding: 2px 6px; }
-  .live2-server-indicator { width: 8px; height: 8px; }
   .live2-center { padding: 0 10px; }
 
-  /* Tape: thinner */
-  .live2-tape { padding: 3px 10px; min-height: 26px; }
-  .live2-tape-chip { font-size: 10px; padding: 2px 8px; }
+  /* Tape */
+  .live2-tape { padding: 3px 10px; min-height: 24px; }
+  .live2-tape-chip { font-size: 10px; padding: 2px 7px; }
 
-  /* Court: side by side but use 3-col buttons to fit more */
-  .live2-court { grid-template-columns: 1fr 14px 1fr; }
-  .live2-side { padding: 4px 4px 3px; gap: 3px; }
-  .live2-side-label { font-size: 11px; letter-spacing: 0.5px; padding: 1px 0; }
+  /* Court: VERTICAL STACK — P1 top, P2 bottom */
+  .live2-court {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 12px 1fr;
+  }
+  .live2-side { padding: 5px 8px 4px; gap: 4px; }
+  .live2-side.p1-wins {
+    border: 1px solid rgba(0,230,118,0.14);
+    border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  }
+  .live2-side.p2-wins {
+    border: 1px solid rgba(68,138,255,0.14);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  }
+  /* Divider becomes a horizontal bar */
+  .live2-divider {
+    writing-mode: horizontal-tb;
+    height: 12px; width: 100%;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-left: none; border-right: none;
+    font-size: 9px; letter-spacing: 4px;
+  }
+  .live2-side-label { font-size: 11px; letter-spacing: 0.5px; padding: 2px 0; }
 
-  /* 3-column button grid on mobile for better density */
-  .live2-btns-grid { grid-template-columns: 1fr 1fr 1fr; gap: 3px; }
-  .live2-btn { padding: 3px 2px; gap: 1px; border-radius: 5px; }
-  .lbtn-icon { font-size: 13px; }
-  .lbtn-label { font-size: 8.5px; font-weight: 700; }
-  .lbtn-sub { display: none; } /* hide sub-labels on mobile to save space */
+  /* 5-col button grid on mobile */
+  .live2-btns-grid { grid-template-columns: repeat(5, 1fr); gap: 3px; }
+  .live2-btn { padding: 4px 2px; gap: 1px; border-radius: 5px; min-height: 0; }
+  .lbtn-icon { font-size: 14px; }
+  .lbtn-label { font-size: 8px; font-weight: 700; }
+  .lbtn-sub { display: none; }
 
-  /* Footer: hide note on mobile, show only stats + server */
+  /* Footer */
   .live2-footer { padding: 4px 8px; gap: 5px; }
   .live2-footer-note { display: none; }
   .live2-mini-stat { padding: 3px 6px; }
@@ -1524,7 +1547,7 @@ tbody tr:hover { background: var(--bg-card-hover); }
   .live2-mini-stat-label { font-size: 7px; }
   .live2-srv-btn { padding: 4px 8px; font-size: 10px; }
 
-  /* Topbar: tighter */
+  /* Topbar */
   .live-topbar { padding: 5px 10px; }
   .live-action-btn { padding: 6px 10px; font-size: 11px; }
 }
@@ -1648,6 +1671,7 @@ tbody tr:hover { background: var(--bg-card-hover); }
       <div class="nav-item" onclick="navigate('export')"><span class="nav-icon">💾</span> Exportar / Importar</div>
       <div class="nav-item" onclick="navigate('settings')"><span class="nav-icon">⚙️</span> Configuración</div>
       <div class="nav-item" onclick="exportJSON()" style="border-top:1px solid var(--border);margin-top:4px;color:var(--accent-green);"><span class="nav-icon">⬇️</span> Backup Completo</div>
+      <div class="nav-item" onclick="exportExcel()" style="color:var(--accent-green);"><span class="nav-icon">📊</span> Exportar Excel</div>
       <div class="nav-item" onclick="navigate('export');setTimeout(generateTransferLink,100)" style="color:var(--accent-blue);"><span class="nav-icon">📲</span> Enviar a Móvil</div>
     </div>
 
@@ -2141,6 +2165,22 @@ tbody tr:hover { background: var(--bg-card-hover); }
         <div class="grid-2">
           <div>
             <div class="card-title" style="margin-bottom:12px;">📤 Exportar</div>
+            <div class="export-card" onclick="exportExcel()">
+              <div class="export-icon">📊</div>
+              <div class="export-info">
+                <div class="export-title">Backup Excel completo</div>
+                <div class="export-desc">Todos los partidos, jugadores, eventos y notas en hojas separadas</div>
+              </div>
+              <div class="badge badge-green">XLSX</div>
+            </div>
+            <div class="export-card" onclick="exportExcel()" style="border-color:rgba(0,200,83,0.4);background:rgba(0,200,83,0.04);">
+              <div class="export-icon">📗</div>
+              <div class="export-info">
+                <div class="export-title">Backup completo (Excel)</div>
+                <div class="export-desc">Todos los datos por partido: jugadores, estadísticas, eventos y notas</div>
+              </div>
+              <div class="badge badge-green">XLSX</div>
+            </div>
             <div class="export-card" onclick="exportJSON()">
               <div class="export-icon">💾</div>
               <div class="export-info">
@@ -4831,6 +4871,190 @@ function confirmTransferImport() {
 function dismissTransferBanner() {
   document.getElementById('transferBanner').style.display = 'none';
   window._transferData = null;
+}
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') { showToast('SheetJS no cargado. Comprueba la conexión.', 'error'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const today = new Date().toLocaleDateString('es-ES');
+
+  // ── Helpers ──
+  const pName = id => { const p = getPlayer(id); return p ? p.name : (id || '—'); };
+  const surf = { hard:'Dura', clay:'Tierra', grass:'Hierba', indoor:'Indoor', other:'Otra' };
+  const mtype = { training:'Entrenamiento', competition:'Competición', friendly:'Amistoso', tournament:'Torneo' };
+  const handL = { right:'Diestro', left:'Zurdo', ambidextrous:'Ambidiestro' };
+  const bhL   = { two:'Dos manos', one:'Una mano' };
+  const lvlL  = { beginner:'Iniciación', intermediate:'Intermedio', advanced:'Avanzado', competitive:'Competitivo', professional:'Profesional' };
+  const ptypeL= { mine:'Mi jugador', opponent:'Oponente' };
+  const SHOT_L= { serve:'Saque', forehand_ground:'Derecha fondo', backhand_ground:'Revés fondo', forehand_volley:'Volea DH', backhand_volley:'Volea RV', smash:'Remate' };
+  const typeL = { ace:'Ace', double_fault:'Doble Falta', winner:'Winner', ufe:'Error NF', forced_error:'Error Forzado', net_winner:'Punto Red', return_winner:'Resto Ganador', return_error:'Resto Fallado', rally_long:'Rally Largo', rally_medium:'Rally Medio', rally_short:'Rally Corto' };
+  const shotL = { serve:'Saque', return:'Resto', forehand:'Derecha', backhand:'Revés', volley:'Volea', smash:'Remate', dropshot:'Dejada', lob:'Globo' };
+
+  // ── SHEET 1: PARTIDOS ──
+  const matchRows = [['Fecha','Hora','Jugador 1','Jugador 2','Torneo','Superficie','Tipo','Formato',
+    'Resultado','Ganador','Estado',
+    'Aces P1','Aces P2','Dobles Faltas P1','Dobles Faltas P2',
+    'Winners P1','Winners P2','ENF P1','ENF P2','Errores Forzados P1','Errores Forzados P2',
+    'Puntos Red P1','Puntos Red P2','Puntos Totales P1','Puntos Totales P2',
+    '% Aces P1','% Aces P2','Ratio Win/ENF P1','Ratio Win/ENF P2',
+    'Lugar','Notas Previas','Notas Post-partido','Objetivos']];
+
+  db.matches.forEach(m => {
+    const s  = m.stats || {};
+    const p1 = s.p1 || {};
+    const p2 = s.p2 || {};
+    const t  = getTournament(m.tournamentId);
+    const totalPts1 = p1.pointsWon || 0;
+    const totalPts2 = p2.pointsWon || 0;
+    const ratioW1 = p1.ufe > 0 ? ((p1.winners||0)/p1.ufe).toFixed(2) : (p1.winners||0 > 0 ? '∞' : '—');
+    const ratioW2 = p2.ufe > 0 ? ((p2.winners||0)/p2.ufe).toFixed(2) : (p2.winners||0 > 0 ? '∞' : '—');
+    const totalServes1 = (p1.aces||0)+(p1.doubleFaults||0);
+    const totalServes2 = (p2.aces||0)+(p2.doubleFaults||0);
+
+    matchRows.push([
+      m.date || '', m.time || '',
+      pName(m.p1), pName(m.p2),
+      t ? t.name : (m.tournamentId || '—'),
+      surf[m.surface] || m.surface || '',
+      mtype[m.matchType] || m.matchType || '',
+      m.format || '',
+      m.result || '', pName(m.winnerId), m.status || '',
+      p1.aces||0, p2.aces||0,
+      p1.doubleFaults||0, p2.doubleFaults||0,
+      p1.winners||0, p2.winners||0,
+      p1.ufe||0, p2.ufe||0,
+      p1.forcedErrors||0, p2.forcedErrors||0,
+      p1.netPoints||0, p2.netPoints||0,
+      totalPts1, totalPts2,
+      totalServes1 > 0 ? Math.round((p1.aces||0)/totalServes1*100)+'%' : '—',
+      totalServes2 > 0 ? Math.round((p2.aces||0)/totalServes2*100)+'%' : '—',
+      ratioW1, ratioW2,
+      m.place || '', m.preNotes || '', m.postNotes || '',
+      (m.objectives||[]).join(', ')
+    ]);
+  });
+
+  const wsMatches = XLSX.utils.aoa_to_sheet(matchRows);
+  // Column widths
+  wsMatches['!cols'] = [
+    {wch:12},{wch:8},{wch:18},{wch:18},{wch:20},{wch:12},{wch:14},{wch:14},
+    {wch:14},{wch:18},{wch:12},
+    {wch:8},{wch:8},{wch:10},{wch:10},
+    {wch:10},{wch:10},{wch:8},{wch:8},{wch:12},{wch:12},
+    {wch:10},{wch:10},{wch:12},{wch:12},
+    {wch:10},{wch:10},{wch:12},{wch:12},
+    {wch:20},{wch:30},{wch:30},{wch:30}
+  ];
+  XLSX.utils.book_append_sheet(wb, wsMatches, 'Partidos');
+
+  // ── SHEET 2: JUGADORES ──
+  const playerRows = [['Nombre','Tipo','Edad','Mano','Revés','Nivel','Email',
+    'Fortalezas','Debilidades','Objetivos','Golpes Ganadores','Peor Golpe',
+    'Partidos Jugados','Victorias','% Victoria','Media ENF','Media Winners','Media Aces',
+    'Notas del coach']];
+
+  db.players.forEach(p => {
+    const pm = db.matches.filter(m => (m.p1===p.id||m.p2===p.id) && m.status==='finished');
+    const wins = pm.filter(m => m.winnerId===p.id).length;
+    const side = m => m.p1===p.id ? 'p1' : 'p2';
+    const avgStat = stat => pm.length ? (pm.reduce((a,m) => a+((m.stats?.[side(m)]||{})[stat]||0),0)/pm.length).toFixed(1) : '—';
+
+    playerRows.push([
+      p.name, ptypeL[p.playerType]||'Mi jugador',
+      p.age||'', handL[p.hand]||p.hand||'',
+      bhL[p.backhand]||p.backhand||'', lvlL[p.level]||p.level||'',
+      p.email||'', p.strengths||'', p.weaknesses||'', p.goals||'',
+      (p.winnerShots||[]).map(s=>SHOT_L[s]||s).join(', '),
+      p.worstShot ? (SHOT_L[p.worstShot]||p.worstShot) : '',
+      pm.length, wins,
+      pm.length ? Math.round(wins/pm.length*100)+'%' : '—',
+      avgStat('ufe'), avgStat('winners'), avgStat('aces'),
+      p.notes||''
+    ]);
+  });
+
+  const wsPlayers = XLSX.utils.aoa_to_sheet(playerRows);
+  wsPlayers['!cols'] = [{wch:18},{wch:12},{wch:6},{wch:10},{wch:10},{wch:14},{wch:22},
+    {wch:24},{wch:24},{wch:24},{wch:26},{wch:16},
+    {wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, wsPlayers, 'Jugadores');
+
+  // ── SHEET 3: EVENTOS POR PARTIDO ──
+  const eventRows = [['Partido (Fecha)','Jugador 1','Jugador 2','Set','Juego',
+    'Ganador del punto','Servidor','Tipo de punto','Golpe','Contexto','Timestamp','Nota']];
+
+  db.events.forEach(ev => {
+    const m = db.matches.find(x => x.id === ev.matchId);
+    if (!m) return;
+    eventRows.push([
+      m.date||'', pName(m.p1), pName(m.p2),
+      ev.setNumber||'', ev.gameNumber||'',
+      ev.winner === 1 ? pName(m.p1) : pName(m.p2),
+      ev.server === 1 ? pName(m.p1) : pName(m.p2),
+      typeL[ev.type]||ev.type||'',
+      shotL[ev.shot]||ev.shot||'',
+      ev.context||'normal',
+      ev.timestamp ? new Date(ev.timestamp).toLocaleString('es-ES') : '',
+      ev.note||''
+    ]);
+  });
+
+  const wsEvents = XLSX.utils.aoa_to_sheet(eventRows);
+  wsEvents['!cols'] = [{wch:12},{wch:16},{wch:16},{wch:6},{wch:6},
+    {wch:16},{wch:16},{wch:16},{wch:14},{wch:12},{wch:20},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, wsEvents, 'Eventos');
+
+  // ── SHEET 4: NOTAS DEL COACH ──
+  const noteTypeL = { technical:'Técnico', tactical:'Táctico', mental:'Mental', physical:'Físico',
+    nutrition:'Nutrición', injury:'Lesión', attitude:'Actitud', decision:'Decisiones',
+    pressure:'Presión', general:'General' };
+  const prioL = { low:'Baja', medium:'Media', high:'Alta' };
+
+  const noteRows = [['Fecha','Jugador','Tipo','Prioridad','Observación']];
+  db.notes.forEach(n => {
+    noteRows.push([
+      n.date||'', pName(n.playerId)||'General',
+      noteTypeL[n.type]||n.type||'',
+      prioL[n.priority]||n.priority||'',
+      n.text||''
+    ]);
+  });
+
+  const wsNotes = XLSX.utils.aoa_to_sheet(noteRows);
+  wsNotes['!cols'] = [{wch:12},{wch:18},{wch:14},{wch:10},{wch:60}];
+  XLSX.utils.book_append_sheet(wb, wsNotes, 'Notas del Coach');
+
+  // ── SHEET 5: RESUMEN ──
+  const summaryRows = [
+    ['TENNIS COACH TRACKER — BACKUP COMPLETO'],
+    ['Generado el', today],
+    ['Coach', db.settings?.coachName || '—'],
+    ['Club', db.settings?.club || '—'],
+    [],
+    ['RESUMEN DE DATOS'],
+    ['Jugadores registrados', db.players.length],
+    ['Partidos totales', db.matches.length],
+    ['Partidos finalizados', db.matches.filter(m=>m.status==='finished').length],
+    ['Eventos registrados', db.events.length],
+    ['Notas del coach', db.notes.length],
+    [],
+    ['TORNEOS'],
+    ['Torneo','Desde','Hasta','Partidos'],
+    ...getTournaments().map(t => [
+      t.name, t.dateFrom, t.dateTo,
+      db.matches.filter(m=>m.tournamentId===t.id).length
+    ])
+  ];
+
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+  wsSummary['!cols'] = [{wch:28},{wch:20},{wch:20},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+  // ── EXPORT ──
+  const filename = `TCT_Backup_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  showToast('📊 Excel exportado: ' + filename);
 }
 
 function exportJSON() {
