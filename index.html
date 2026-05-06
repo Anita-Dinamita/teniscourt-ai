@@ -734,7 +734,78 @@ tbody tr:hover { background: var(--bg-card-hover); }
   padding: 4px;
 }
 
-/* ===== BOTTOM NAV (mobile) ===== */
+/* ===== DASHBOARD TOURNAMENT CARDS ===== */
+.dash-tournament-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-orange);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+.dash-tournament-card:hover { border-color: var(--accent-orange); }
+
+.dash-t-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dash-t-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent-orange);
+  line-height: 1;
+}
+.dash-t-dates {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.dash-t-body { display: flex; flex-direction: column; gap: 14px; }
+
+.dash-t-kpis {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dash-t-kpi {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  text-align: center;
+  min-width: 60px;
+}
+.dash-t-kpi-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-primary);
+}
+.dash-t-kpi-label {
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dash-t-players { border-top: 1px solid var(--border); padding-top: 10px; }
+.dash-t-results { border-top: 1px solid var(--border); padding-top: 10px; }
+
+@media (max-width: 600px) {
+  .dash-t-kpis { gap: 6px; }
+  .dash-t-kpi { padding: 6px 10px; min-width: 50px; }
+  .dash-t-kpi-val { font-size: 20px; }
+  .dash-t-name { font-size: 18px; }
+}
 .bottom-nav {
   display: none;
   position: fixed;
@@ -1731,6 +1802,15 @@ tbody tr:hover { background: var(--bg-card-hover); }
           </div>
         </div>
 
+        <!-- ====== TOURNAMENTS BLOCK ====== -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent-orange);">🏆 Torneos</div>
+            <button class="btn btn-secondary btn-sm" onclick="exportPDFAll()" style="border-color:rgba(255,82,82,0.4);color:var(--accent-red);">🖨️ Exportar PDF — Todo</button>
+          </div>
+          <div id="dashTournamentsGrid"></div>
+        </div>
+
         <!-- Player tabs -->
         <div class="card" style="margin-bottom:20px;">
           <div class="tabs" style="margin-bottom:16px;">
@@ -1777,15 +1857,7 @@ tbody tr:hover { background: var(--bg-card-hover); }
           <div class="section-title">Jugadores</div>
           <button class="btn btn-primary" onclick="openPlayerModal()">+ Añadir Jugador</button>
         </div>
-
-        <div id="playersGrid" class="grid-3">
-          <div class="empty-state" style="grid-column:1/-1;">
-            <div class="empty-state-icon">👤</div>
-            <div class="empty-state-title">Sin jugadores</div>
-            <div class="empty-state-text">Crea tu primer jugador para empezar</div>
-            <button class="btn btn-primary" onclick="openPlayerModal()">+ Añadir Jugador</button>
-          </div>
-        </div>
+        <div id="playersGrid"></div>
       </div>
 
       <!-- ==================== CALENDAR ==================== -->
@@ -2553,12 +2625,25 @@ tbody tr:hover { background: var(--bg-card-hover); }
 <div class="modal-overlay" id="finishMatchModal">
   <div class="modal">
     <div class="modal-title">Finalizar Partido</div>
+
+    <!-- Auto-detected result banner -->
+    <div id="fm-auto-banner" style="background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;display:none;">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent-green);margin-bottom:6px;font-weight:700;">✓ Resultado detectado automáticamente</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;" id="fm-auto-result-display">—</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Ganador: <strong id="fm-auto-winner-name" style="color:var(--accent-green);">—</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="fm-auto-stats-row"></div>
+      </div>
+    </div>
+
     <div class="form-group">
-      <label class="form-label">Resultado (ej: 6-4, 6-3)</label>
+      <label class="form-label">Resultado <span style="color:var(--text-muted);font-weight:400;">(puedes editarlo)</span></label>
       <input type="text" class="form-input" id="fm-result" placeholder="6-4, 3-6, 7-5">
     </div>
     <div class="form-group">
-      <label class="form-label">Ganador</label>
+      <label class="form-label">Ganador <span style="color:var(--text-muted);font-weight:400;">(seleccionado automáticamente)</span></label>
       <select class="form-select" id="fm-winner">
         <option value="">Sin ganador (inacabado)</option>
       </select>
@@ -2569,7 +2654,8 @@ tbody tr:hover { background: var(--bg-card-hover); }
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('finishMatchModal')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmFinishMatch()">Finalizar Partido</button>
+      <button class="btn btn-blue btn-sm" onclick="confirmFinishMatch(true)" style="gap:6px;">📗 Finalizar y exportar Excel</button>
+      <button class="btn btn-primary" onclick="confirmFinishMatch(false)">✓ Finalizar Partido</button>
     </div>
   </div>
 </div>
@@ -3235,6 +3321,120 @@ function refreshDashboard() {
   renderDashboardCharts(finished);
   renderCoachSummary(finished);
   renderDashPlayerGrid();
+  renderDashTournaments(finished);
+}
+
+// ── TOURNAMENT CARDS ON DASHBOARD ──
+function renderDashTournaments(finished) {
+  const el = document.getElementById('dashTournamentsGrid');
+  if (!el) return;
+
+  const tournaments = getTournaments();
+  const today = new Date();
+
+  // Only show tournaments that have at least 1 match OR are upcoming/ongoing
+  const relevantTourneys = tournaments.filter(t => {
+    const hasMatches = db.matches.some(m => m.tournamentId === t.id);
+    const isUpcoming = new Date(t.dateTo) >= today;
+    return hasMatches || isUpcoming;
+  });
+
+  if (!relevantTourneys.length) {
+    el.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">Sin torneos con datos aún. Asigna un torneo al crear partidos.</div>`;
+    return;
+  }
+
+  el.innerHTML = relevantTourneys.map(t => {
+    const tMatches  = db.matches.filter(m => m.tournamentId === t.id);
+    const tFinished = tMatches.filter(m => m.status === 'finished');
+    const tPending  = tMatches.filter(m => m.status === 'pending');
+    const tPlaying  = tMatches.filter(m => m.status === 'playing');
+
+    // Stats across all finished matches of this tournament
+    const allStats = tFinished.map(m => m.stats || { p1:{}, p2:{} });
+    const totalWinners = allStats.reduce((a,s) => a+(s.p1?.winners||0)+(s.p2?.winners||0), 0);
+    const totalUFE     = allStats.reduce((a,s) => a+(s.p1?.ufe||0)+(s.p2?.ufe||0), 0);
+    const totalAces    = allStats.reduce((a,s) => a+(s.p1?.aces||0)+(s.p2?.aces||0), 0);
+    const totalDF      = allStats.reduce((a,s) => a+(s.p1?.doubleFaults||0)+(s.p2?.doubleFaults||0), 0);
+
+    // Per-player stats in this tournament
+    const playerStats = db.players.map(p => {
+      const pm = tFinished.filter(m => m.p1===p.id||m.p2===p.id);
+      if (!pm.length) return null;
+      const wins = pm.filter(m => m.winnerId===p.id).length;
+      const avgUFE = (pm.reduce((a,m) => { const s=m.p1===p.id?'p1':'p2'; return a+((m.stats?.[s]||{}).ufe||0); },0)/pm.length).toFixed(1);
+      const avgW   = (pm.reduce((a,m) => { const s=m.p1===p.id?'p1':'p2'; return a+((m.stats?.[s]||{}).winners||0); },0)/pm.length).toFixed(1);
+      return { name: p.name, played: pm.length, wins, avgUFE, avgW, playerType: p.playerType };
+    }).filter(Boolean);
+
+    // Tournament status
+    const dateFrom = new Date(t.dateFrom);
+    const dateTo   = new Date(t.dateTo);
+    let statusLabel, statusColor;
+    if (today < dateFrom) { statusLabel = 'Próximo'; statusColor = 'var(--accent-orange)'; }
+    else if (today > dateTo) { statusLabel = 'Finalizado'; statusColor = 'var(--text-muted)'; }
+    else { statusLabel = 'En curso'; statusColor = 'var(--accent-green)'; }
+
+    // Results list
+    const resultLines = tFinished.slice(-5).reverse().map(m => {
+      const wn = m.winnerId ? playerName(m.winnerId) : '—';
+      return `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">
+        <span>${playerName(m.p1)} vs ${playerName(m.p2)}</span>
+        <span style="color:var(--text-muted);">${m.result||'—'}</span>
+        <span style="color:var(--accent-green);font-weight:600;">${wn}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="dash-tournament-card">
+      <!-- Header -->
+      <div class="dash-t-header">
+        <div>
+          <div class="dash-t-name">${t.name}</div>
+          <div class="dash-t-dates">${formatDate(t.dateFrom)} — ${formatDate(t.dateTo)} · ${surfaceLabel(t.surface)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <span style="font-size:11px;font-weight:700;color:${statusColor};letter-spacing:1px;">${statusLabel}</span>
+          <span style="font-size:11px;color:var(--text-muted);">${tFinished.length} jugados${tPending.length?' · '+tPending.length+' pend.':''}</span>
+        </div>
+      </div>
+
+      <div class="dash-t-body">
+        <!-- KPIs -->
+        <div class="dash-t-kpis">
+          <div class="dash-t-kpi"><div class="dash-t-kpi-val">${tFinished.length}</div><div class="dash-t-kpi-label">Partidos</div></div>
+          <div class="dash-t-kpi"><div class="dash-t-kpi-val" style="color:var(--accent-green);">${totalWinners}</div><div class="dash-t-kpi-label">Winners</div></div>
+          <div class="dash-t-kpi"><div class="dash-t-kpi-val" style="color:var(--accent-red);">${totalUFE}</div><div class="dash-t-kpi-label">ENF</div></div>
+          <div class="dash-t-kpi"><div class="dash-t-kpi-val" style="color:var(--accent-blue);">${totalAces}</div><div class="dash-t-kpi-label">Aces</div></div>
+          <div class="dash-t-kpi"><div class="dash-t-kpi-val" style="color:var(--accent-orange);">${totalDF}</div><div class="dash-t-kpi-label">2DF</div></div>
+        </div>
+
+        <!-- Per-player stats -->
+        ${playerStats.length ? `<div class="dash-t-players">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Estadísticas por jugador</div>
+          ${playerStats.map(ps => `
+            <div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;">
+              <div style="font-weight:700;color:${ps.playerType==='opponent'?'var(--accent-blue)':'var(--accent-green)'};">${ps.name}</div>
+              <div style="text-align:center;"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;">${ps.wins}/${ps.played}</span><br><span style="font-size:9px;color:var(--text-muted);">Victorias</span></div>
+              <div style="text-align:center;"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent-green);">${ps.avgW}</span><br><span style="font-size:9px;color:var(--text-muted);">Win/p</span></div>
+              <div style="text-align:center;"><span style="font-family:'JetBrains Mono',monospace;color:var(--accent-red);">${ps.avgUFE}</span><br><span style="font-size:9px;color:var(--text-muted);">ENF/p</span></div>
+              <div style="text-align:center;"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${ps.wins/ps.played>=0.5?'var(--accent-green)':'var(--accent-red)'};">${Math.round(ps.wins/ps.played*100)}%</span><br><span style="font-size:9px;color:var(--text-muted);">%vic</span></div>
+            </div>`).join('')}
+        </div>` : ''}
+
+        <!-- Recent results -->
+        ${tFinished.length ? `<div class="dash-t-results">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Últimos resultados</div>
+          ${resultLines}
+        </div>` : tPending.length ? `<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">Sin partidos jugados aún.</div>` : ''}
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="navigate('calendar')">📅 Ver calendario</button>
+        ${tPending.length ? `<button class="btn btn-primary btn-sm" onclick="navigate('new-match')">➕ Nuevo partido</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="exportPDFTournament('${t.id}')" style="border-color:rgba(255,82,82,0.3);color:var(--accent-red);">🖨️ PDF torneo</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderDashboardCharts(matches) {
@@ -3515,9 +3715,10 @@ function deletePlayer(id) {
 }
 
 function renderPlayers() {
-  const grid = document.getElementById('playersGrid');
+  const container = document.getElementById('playersGrid');
+
   if (!db.players.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+    container.innerHTML = `<div class="empty-state">
       <div class="empty-state-icon">👤</div>
       <div class="empty-state-title">Sin jugadores</div>
       <div class="empty-state-text">Crea tu primer jugador para empezar</div>
@@ -3526,35 +3727,58 @@ function renderPlayers() {
     return;
   }
 
-  const colors = ['#00e676','#448aff','#ff9800','#ce93d8','#ff5252','#80cbc4'];
-  grid.innerHTML = db.players.map((p, i) => {
-    const color = colors[i % colors.length];
-    const matches = db.matches.filter(m => (m.p1 === p.id || m.p2 === p.id) && m.status === 'finished');
-    const wins = matches.filter(m => m.winnerId === p.id).length;
-    const levelLabels = { beginner:'Iniciación', intermediate:'Intermedio', advanced:'Avanzado', competitive:'Competitivo', professional:'Profesional' };
-    const handLabel = p.hand === 'right' ? 'Diestro' : p.hand === 'left' ? 'Zurdo' : 'Ambidiestro';
-    return `<div class="player-card">
+  const myPlayers  = db.players.filter(p => p.playerType !== 'opponent');
+  const opponents  = db.players.filter(p => p.playerType === 'opponent');
+  const colors     = ['#00e676','#448aff','#ff9800','#ce93d8','#ff5252','#80cbc4'];
+  const levelLabels = { beginner:'Iniciación', intermediate:'Intermedio', advanced:'Avanzado', competitive:'Competitivo', professional:'Profesional' };
+
+  const buildCard = (p, i, accentColor) => {
+    const matches = db.matches.filter(m => (m.p1===p.id||m.p2===p.id) && m.status==='finished');
+    const wins    = matches.filter(m => m.winnerId===p.id).length;
+    const handLabel = p.hand==='right'?'Diestro':p.hand==='left'?'Zurdo':'Ambidiestro';
+    return `<div class="player-card" style="border-top:3px solid ${accentColor}22;">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="player-avatar" style="background:${color}22;color:${color};">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="player-avatar" style="background:${accentColor}22;color:${accentColor};">${p.name.charAt(0).toUpperCase()}</div>
         <div>
           <div class="player-name">${p.name}</div>
-          <div class="player-meta">${p.age ? p.age + ' años · ' : ''}${handLabel} · ${levelLabels[p.level]||p.level}</div>
+          <div class="player-meta">${p.age?p.age+' años · ':''}${handLabel} · ${levelLabels[p.level]||p.level}</div>
         </div>
       </div>
       <div class="stat-row"><span class="stat-label">Partidos</span><span class="stat-value">${matches.length}</span></div>
       <div class="stat-row"><span class="stat-label">Victorias</span><span class="stat-value" style="color:var(--accent-green);">${wins}</span></div>
-      <div class="stat-row"><span class="stat-label">% Victorias</span><span class="stat-value">${matches.length ? Math.round(wins/matches.length*100)+'%' : '—'}</span></div>
-      ${p.winnerShots?.length ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-green);">🏆 </span>${p.winnerShots.map(s=>SHOT_LABELS[s]||s).join(', ')}</div>` : ''}
-      ${p.worstShot ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-red);">⚠ Peor: </span>${SHOT_LABELS[p.worstShot]||p.worstShot}</div>` : ''}
-      ${p.strengths ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-green);">💪 </span>${p.strengths}</div>` : ''}
-      ${p.weaknesses ? `<div style="font-size:12px;color:var(--text-secondary);"><span style="color:var(--accent-red);">⚠ </span>${p.weaknesses}</div>` : ''}
+      <div class="stat-row"><span class="stat-label">% Victorias</span><span class="stat-value">${matches.length?Math.round(wins/matches.length*100)+'%':'—'}</span></div>
+      ${p.winnerShots?.length?`<div style="font-size:12px;"><span style="color:var(--accent-green);">🏆 </span>${p.winnerShots.map(s=>SHOT_LABELS[s]||s).join(', ')}</div>`:''}
+      ${p.worstShot?`<div style="font-size:12px;"><span style="color:var(--accent-red);">⚠ Peor: </span>${SHOT_LABELS[p.worstShot]||p.worstShot}</div>`:''}
+      ${p.strengths?`<div style="font-size:12px;"><span style="color:var(--accent-green);">💪 </span>${p.strengths}</div>`:''}
+      ${p.weaknesses?`<div style="font-size:12px;"><span style="color:var(--accent-red);">⚠ </span>${p.weaknesses}</div>`:''}
       <div style="display:flex;gap:8px;margin-top:4px;">
         <button class="btn btn-secondary btn-sm" onclick="openPlayerDetail('${p.id}')">👁 Ver</button>
         <button class="btn btn-secondary btn-sm" onclick="openPlayerModal('${p.id}')">✏ Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">🗑</button>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  const buildGroup = (title, icon, players, accentColor, emptyText, btnLabel) => {
+    const cards = players.map((p, i) => buildCard(p, i, accentColor)).join('');
+    const emptyState = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
+      ${emptyText}
+      <button class="btn btn-secondary btn-sm" style="margin-left:10px;" onclick="openPlayerModal()">${btnLabel}</button>
+    </div>`;
+    return `
+    <div style="margin-bottom:28px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid ${accentColor}33;">
+        <span style="font-size:18px;">${icon}</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:${accentColor};">${title}</span>
+        <span style="font-size:12px;color:var(--text-muted);font-weight:600;">${players.length} ${players.length===1?'jugador':'jugadores'}</span>
+      </div>
+      <div class="grid-3">${players.length ? cards : emptyState}</div>
+    </div>`;
+  };
+
+  container.innerHTML =
+    buildGroup('Mis Jugadores', '👤', myPlayers, '#00e676', 'Sin jugadores propios aún.', '+ Añadir jugador') +
+    buildGroup('Oponentes', '🎾', opponents, '#448aff', 'Sin oponentes registrados aún.', '+ Añadir oponente');
 }
 
 function openPlayerDetail(id) {
@@ -4266,22 +4490,112 @@ function statRow(label, v1, v2, lowerBetter=false) {
 function finishMatch() {
   if (!currentMatch) return;
   populatePlayerSelects();
-  document.getElementById('fm-result').value = '';
+
+  const p1n = playerName(currentMatch.p1);
+  const p2n = playerName(currentMatch.p2);
+
+  // ── Auto-calculate result from liveScore ──
+  const sets = [...liveScore.sets]; // completed sets
+  // Include current set if it has games played
+  const curSet = liveScore.currentSet;
+  const hasCurrent = curSet.p1 > 0 || curSet.p2 > 0;
+
+  // Build result string from sets
+  let resultStr = '';
+  let p1SetsWon = 0, p2SetsWon = 0;
+
+  sets.forEach(s => {
+    if (resultStr) resultStr += ', ';
+    resultStr += `${s.p1}-${s.p2}`;
+    if (s.p1 > s.p2) p1SetsWon++;
+    else p2SetsWon++;
+  });
+
+  // Add current incomplete set if it has progress
+  if (hasCurrent) {
+    if (resultStr) resultStr += ', ';
+    resultStr += `${curSet.p1}-${curSet.p2}`;
+    if (curSet.p1 > curSet.p2) p1SetsWon++;
+    else if (curSet.p2 > curSet.p1) p2SetsWon++;
+  }
+
+  // Determine winner from sets won
+  let autoWinnerId = null;
+  let autoWinnerName = '—';
+  if (p1SetsWon > p2SetsWon) {
+    autoWinnerId = currentMatch.p1;
+    autoWinnerName = p1n;
+  } else if (p2SetsWon > p1SetsWon) {
+    autoWinnerId = currentMatch.p2;
+    autoWinnerName = p2n;
+  } else {
+    // Fallback: whoever won more points
+    const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+    if ((stats.p1.pointsWon||0) > (stats.p2.pointsWon||0)) {
+      autoWinnerId = currentMatch.p1; autoWinnerName = p1n;
+    } else if ((stats.p2.pointsWon||0) > (stats.p1.pointsWon||0)) {
+      autoWinnerId = currentMatch.p2; autoWinnerName = p2n;
+    }
+  }
+
+  // Fill in the form
+  document.getElementById('fm-result').value = resultStr || '';
   document.getElementById('fm-notes').value = '';
-  document.getElementById('fm-winner').value = '';
+
+  // Set winner select
+  const fw = document.getElementById('fm-winner');
+  if (fw) {
+    fw.innerHTML = '<option value="">Sin ganador</option>';
+    [{ id: currentMatch.p1, name: p1n }, { id: currentMatch.p2, name: p2n }].forEach(p => {
+      if (!p.id) return;
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name;
+      fw.appendChild(opt);
+    });
+    if (autoWinnerId) fw.value = autoWinnerId;
+  }
+
+  // Show auto-detection banner if we have data
+  const banner = document.getElementById('fm-auto-banner');
+  const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+
+  if (resultStr || autoWinnerId) {
+    banner.style.display = 'block';
+    document.getElementById('fm-auto-result-display').textContent = resultStr || '—';
+    const winEl = document.getElementById('fm-auto-winner-name');
+    winEl.textContent = autoWinnerName;
+    winEl.style.color = autoWinnerId === currentMatch.p1 ? 'var(--accent-green)' : 'var(--accent-blue)';
+
+    // Mini stats row
+    const statsRow = document.getElementById('fm-auto-stats-row');
+    const mkStat = (label, v1, v2) =>
+      `<div style="text-align:center;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:5px 10px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;">${v1}<span style="color:var(--text-muted);font-size:10px;"> / </span>${v2}</div>
+        <div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">${label}</div>
+       </div>`;
+    statsRow.innerHTML =
+      mkStat('Puntos', stats.p1.pointsWon||0, stats.p2.pointsWon||0) +
+      mkStat('Winners', stats.p1.winners||0, stats.p2.winners||0) +
+      mkStat('ENF', stats.p1.ufe||0, stats.p2.ufe||0) +
+      mkStat('Aces', stats.p1.aces||0, stats.p2.aces||0);
+  } else {
+    banner.style.display = 'none';
+  }
+
   openModal('finishMatchModal');
 }
 
-function confirmFinishMatch() {
+function confirmFinishMatch(exportExcelAfter = false) {
   if (!currentMatch) return;
-  const result = document.getElementById('fm-result').value;
+  const result   = document.getElementById('fm-result').value;
   const winnerId = document.getElementById('fm-winner').value || null;
-  const notes = document.getElementById('fm-notes').value;
+  const notes    = document.getElementById('fm-notes').value;
+  const stats    = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
+  const matchId  = currentMatch.id;
 
-  const stats = calculateMatchStats(currentMatch.id, currentMatch.p1, currentMatch.p2);
-
-  // Update match in db
-  const idx = db.matches.findIndex(m => m.id === currentMatch.id);
+  // Save the finished match
+  const idx = db.matches.findIndex(m => m.id === matchId);
   if (idx > -1) {
     db.matches[idx] = {
       ...currentMatch,
@@ -4300,7 +4614,12 @@ function confirmFinishMatch() {
   saveData();
   closeModal('finishMatchModal');
   showToast('Partido finalizado ✓');
-  navigate('history');
+
+  if (exportExcelAfter) {
+    exportMatchExcel(matchId);
+  } else {
+    navigate('history');
+  }
 }
 
 // ============================================================
@@ -4873,6 +5192,110 @@ function dismissTransferBanner() {
   window._transferData = null;
 }
 
+// ── Export a single match as Excel ──
+function exportMatchExcel(matchId) {
+  if (typeof XLSX === 'undefined') { showToast('SheetJS no disponible', 'error'); navigate('history'); return; }
+
+  const m = db.matches.find(x => x.id === matchId);
+  if (!m) { navigate('history'); return; }
+
+  const wb   = XLSX.utils.book_new();
+  const p1n  = playerName(m.p1) || '?';
+  const p2n  = playerName(m.p2) || '?';
+  const wn   = m.winnerId ? playerName(m.winnerId) : '—';
+  const s    = m.stats || { p1:{}, p2:{} };
+  const t    = getTournament(m.tournamentId);
+  const surf = { hard:'Dura', clay:'Tierra', grass:'Hierba', indoor:'Indoor', other:'Otra' };
+  const mtype= { training:'Entrenamiento', competition:'Competición', friendly:'Amistoso', tournament:'Torneo' };
+  const typeL= { ace:'Ace', double_fault:'Doble Falta', winner:'Winner', ufe:'Error NF', forced_error:'Error Forzado', net_winner:'Punto Red', return_winner:'Resto Ganador', return_error:'Resto Fallado', rally_long:'Rally Largo', rally_medium:'Rally Medio', rally_short:'Rally Corto' };
+  const shotL= { serve:'Saque', return:'Resto', forehand:'Derecha', backhand:'Revés', volley:'Volea', smash:'Remate', dropshot:'Dejada', lob:'Globo' };
+
+  // ── SHEET 1: RESUMEN DEL PARTIDO ──
+  const summary = [
+    ['RESUMEN DEL PARTIDO'],
+    [],
+    ['Fecha', m.date||''], ['Hora', m.time||''],
+    ['Jugador 1', p1n], ['Jugador 2', p2n],
+    ['Resultado', m.result||'—'], ['Ganador', wn],
+    ['Torneo', t ? t.name : '—'],
+    ['Superficie', surf[m.surface]||m.surface||''],
+    ['Tipo', mtype[m.matchType]||m.matchType||''],
+    ['Formato', m.format||''], ['Lugar', m.place||''],
+    [],
+    ['ESTADÍSTICAS', p1n, p2n],
+    ['Aces',            s.p1?.aces||0,         s.p2?.aces||0],
+    ['Dobles Faltas',   s.p1?.doubleFaults||0,  s.p2?.doubleFaults||0],
+    ['Winners',         s.p1?.winners||0,       s.p2?.winners||0],
+    ['Errores NF',      s.p1?.ufe||0,           s.p2?.ufe||0],
+    ['Errores Forzados',s.p1?.forcedErrors||0,  s.p2?.forcedErrors||0],
+    ['Puntos en Red',   s.p1?.netPoints||0,     s.p2?.netPoints||0],
+    ['Restos Ganadores',s.p1?.returnWinners||0, s.p2?.returnWinners||0],
+    ['Puntos Totales',  s.p1?.pointsWon||0,     s.p2?.pointsWon||0],
+    ['Ratio Win/ENF',
+      s.p1?.ufe > 0 ? ((s.p1?.winners||0)/s.p1.ufe).toFixed(2) : '—',
+      s.p2?.ufe > 0 ? ((s.p2?.winners||0)/s.p2.ufe).toFixed(2) : '—'],
+    [],
+    ['Notas previas', m.preNotes||''],
+    ['Notas post-partido', m.postNotes||''],
+    ['Objetivos', (m.objectives||[]).join(', ')],
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(summary);
+  wsSummary['!cols'] = [{wch:22},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+  // ── SHEET 2: PUNTO A PUNTO ──
+  const events = db.events.filter(e => e.matchId === matchId);
+  const eventRows = [['#','Set','Juego','Ganador Punto','Servidor','Tipo','Golpe','Timestamp','Nota']];
+  events.forEach((ev, i) => {
+    eventRows.push([
+      i+1,
+      ev.setNumber||'', ev.gameNumber||'',
+      ev.winner===1 ? p1n : p2n,
+      ev.server===1  ? p1n : p2n,
+      typeL[ev.type]||ev.type||'',
+      shotL[ev.shot]||ev.shot||'',
+      ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString('es-ES') : '',
+      ev.note||''
+    ]);
+  });
+  const wsEvents = XLSX.utils.aoa_to_sheet(eventRows);
+  wsEvents['!cols'] = [{wch:4},{wch:5},{wch:6},{wch:18},{wch:18},{wch:18},{wch:14},{wch:10},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, wsEvents, 'Punto a Punto');
+
+  // ── SHEET 3: STATS POR SET ──
+  const setRows = [['Set','Puntos '+p1n,'Puntos '+p2n,'Winners '+p1n,'Winners '+p2n,'ENF '+p1n,'ENF '+p2n]];
+  const allSets = [...liveScore.sets];
+  allSets.forEach((set, si) => {
+    const setEvs = events.filter(e => e.setNumber === si+1);
+    const p1pts  = setEvs.filter(e => e.winner===1).length;
+    const p2pts  = setEvs.filter(e => e.winner===2).length;
+    const p1w    = setEvs.filter(e => e.winner===1 && e.type==='winner').length;
+    const p2w    = setEvs.filter(e => e.winner===2 && e.type==='winner').length;
+    const p1ufe  = setEvs.filter(e => e.winner===2 && e.type==='ufe').length;
+    const p2ufe  = setEvs.filter(e => e.winner===1 && e.type==='ufe').length;
+    setRows.push([`Set ${si+1}`, p1pts, p2pts, p1w, p2w, p1ufe, p2ufe]);
+  });
+  const wsSets = XLSX.utils.aoa_to_sheet(setRows);
+  wsSets['!cols'] = [{wch:8},{wch:16},{wch:16},{wch:16},{wch:16},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, wsSets, 'Por Set');
+
+  // ── SHEET 4: NOTAS DEL COACH ──
+  const matchNotes = db.notes.filter(n => n.matchId === matchId || !n.matchId);
+  const noteTypeL = { technical:'Técnico', tactical:'Táctico', mental:'Mental', physical:'Físico', nutrition:'Nutrición', injury:'Lesión', attitude:'Actitud', decision:'Decisiones', pressure:'Presión', general:'General' };
+  const noteRows = [['Fecha','Jugador','Tipo','Prioridad','Observación']];
+  matchNotes.forEach(n => noteRows.push([n.date||'', playerName(n.playerId)||'General', noteTypeL[n.type]||n.type||'', n.priority||'', n.text||'']));
+  if (noteRows.length > 1) {
+    const wsNotes = XLSX.utils.aoa_to_sheet(noteRows);
+    wsNotes['!cols'] = [{wch:12},{wch:18},{wch:14},{wch:10},{wch:60}];
+    XLSX.utils.book_append_sheet(wb, wsNotes, 'Notas del Coach');
+  }
+
+  const filename = `Partido_${p1n}_vs_${p2n}_${m.date||'sin-fecha'}.xlsx`.replace(/\s/g,'_');
+  XLSX.writeFile(wb, filename);
+  showToast('📗 Excel exportado: ' + filename);
+  navigate('history');
+}
+
 function exportExcel() {
   if (typeof XLSX === 'undefined') { showToast('SheetJS no cargado. Comprueba la conexión.', 'error'); return; }
 
@@ -5100,9 +5523,270 @@ function downloadFile(filename, content, mimeType) {
   URL.revokeObjectURL(url);
 }
 
-function printReport() {
-  window.print();
+// ============================================================
+// PDF EXPORT — generates styled HTML page + window.print()
+// ============================================================
+
+function buildPDFStyles() {
+  return `
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', Arial, sans-serif; color: #111; background: #fff; font-size: 13px; line-height: 1.5; }
+    .page { max-width: 820px; margin: 0 auto; padding: 28px 32px; }
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 3px; color: #000; }
+    h2 { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 2px; color: #1a1a1a; margin: 28px 0 12px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+    h3 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; color: #333; margin: 18px 0 8px; }
+    .cover { text-align: center; padding: 60px 0 40px; border-bottom: 3px solid #000; margin-bottom: 32px; }
+    .cover-logo { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 6px; color: #009944; }
+    .cover-sub { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-top: 4px; }
+    .cover-title { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; margin: 24px 0 8px; }
+    .cover-meta { font-size: 12px; color: #555; }
+    .kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 14px 0; }
+    .kpi { background: #f5f5f5; border: 1px solid #ddd; border-radius: 6px; padding: 10px 8px; text-align: center; }
+    .kpi-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; color: #111; line-height: 1; }
+    .kpi-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: #888; margin-top: 2px; }
+    .kpi.green .kpi-val { color: #009944; }
+    .kpi.red .kpi-val { color: #cc2200; }
+    .kpi.blue .kpi-val { color: #1a56db; }
+    .kpi.orange .kpi-val { color: #c47800; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
+    th { background: #111; color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+    td { padding: 7px 10px; border-bottom: 1px solid #eee; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .badge-green { background: #e6f9ef; color: #009944; }
+    .badge-red { background: #fde8e4; color: #cc2200; }
+    .badge-gray { background: #f0f0f0; color: #666; }
+    .player-block { background: #f9f9f9; border: 1px solid #ddd; border-left: 4px solid #009944; border-radius: 6px; padding: 14px 16px; margin: 12px 0; }
+    .player-block.opponent { border-left-color: #1a56db; }
+    .player-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; }
+    .insight-block { background: #f5fdf8; border: 1px solid #b3e6c8; border-left: 3px solid #009944; padding: 10px 14px; margin: 6px 0; border-radius: 4px; font-size: 12px; }
+    .insight-block.warn { background: #fff8ec; border-color: #ffd580; border-left-color: #c47800; }
+    .insight-block.danger { background: #fff0ee; border-color: #fbb; border-left-color: #cc2200; }
+    .section-divider { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+    .stat-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 12px; }
+    .footer { text-align: center; font-size: 10px; color: #aaa; margin-top: 40px; padding-top: 12px; border-top: 1px solid #eee; }
+    @media print {
+      @page { margin: 15mm 12mm; size: A4; }
+      .no-print { display: none !important; }
+      h2 { page-break-before: auto; }
+      .player-block, table { page-break-inside: avoid; }
+      .page-break { page-break-before: always; }
+    }
+    .print-btn { position: fixed; bottom: 20px; right: 20px; background: #009944; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 999; }
+  </style>`;
 }
+
+function buildPDFCover(title, subtitle) {
+  const coach = db.settings?.coachName || 'Emmanuel Diez Lopez';
+  const club  = db.settings?.club || 'EDL Academy';
+  const today = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' });
+  return `<div class="cover">
+    <div class="cover-logo">EDL</div>
+    <div class="cover-sub">Tennis Coach Tracker</div>
+    <div class="cover-title">${title}</div>
+    <div class="cover-meta">${subtitle}<br><br>Coach: <strong>${coach}</strong> · ${club}<br>Generado el ${today}</div>
+  </div>`;
+}
+
+function buildPlayerInsights(player, matches) {
+  const pm = matches.filter(m => m.p1===player.id||m.p2===player.id);
+  if (!pm.length) return '';
+  const finished = pm.filter(m => m.status==='finished');
+  if (!finished.length) return '<p style="color:#888;font-size:12px;">Sin partidos finalizados en este torneo.</p>';
+
+  const wins = finished.filter(m => m.winnerId===player.id).length;
+  const getStat = stat => finished.reduce((a,m) => { const s=m.p1===player.id?'p1':'p2'; return a+((m.stats?.[s]||{})[stat]||0); }, 0);
+  const n = finished.length;
+  const avgUFE = (getStat('ufe')/n).toFixed(1);
+  const avgW   = (getStat('winners')/n).toFixed(1);
+  const avgAce = (getStat('aces')/n).toFixed(1);
+  const avgDF  = (getStat('doubleFaults')/n).toFixed(1);
+  const totPts = getStat('pointsWon');
+  const winPct = Math.round(wins/n*100);
+
+  const SHOT_L = { serve:'Saque', forehand_ground:'Derecha de fondo', backhand_ground:'Revés de fondo', forehand_volley:'Volea de derecha', backhand_volley:'Volea de revés', smash:'Remate' };
+  const lvlL = { beginner:'Iniciación', intermediate:'Intermedio', advanced:'Avanzado', competitive:'Competitivo', professional:'Profesional' };
+
+  // Insights
+  const insights = [];
+  if (winPct >= 60) insights.push({ type:'', text:`<strong>${player.name}</strong> mantiene un ${winPct}% de victorias en este torneo (${wins}/${n}).` });
+  if (winPct < 40 && n >= 2) insights.push({ type:'danger', text:`Porcentaje de victorias bajo: ${winPct}% (${wins}/${n}). Revisar estrategia.` });
+  if (parseFloat(avgUFE) > 18) insights.push({ type:'warn', text:`Media alta de errores no forzados: ${avgUFE}/partido. Trabajar la consistencia.` });
+  if (parseFloat(avgUFE) <= 12 && n>=2) insights.push({ type:'', text:`Control de errores excelente: solo ${avgUFE} ENF por partido.` });
+  if (parseFloat(avgDF) > 3) insights.push({ type:'warn', text:`Dobles faltas frecuentes: ${avgDF}/partido. Revisar mecánica del segundo saque.` });
+  if (parseFloat(avgAce) >= 4) insights.push({ type:'', text:`Saque dominante: ${avgAce} aces por partido de media.` });
+
+  // Coach notes for this player
+  const notes = db.notes.filter(note => note.playerId === player.id).slice(-5);
+
+  return `
+  <div class="player-block ${player.playerType==='opponent'?'opponent':''}">
+    <div class="player-name">${player.name} <span style="font-size:13px;font-weight:400;color:#666;">${player.playerType==='opponent'?'· Oponente':''}</span></div>
+    <div style="font-size:11px;color:#666;margin-bottom:10px;">${player.age?player.age+' años · ':''} ${player.hand==='left'?'Zurdo':'Diestro'} · ${lvlL[player.level]||player.level||''}</div>
+
+    <div class="kpis" style="grid-template-columns:repeat(5,1fr);">
+      <div class="kpi"><div class="kpi-val">${n}</div><div class="kpi-label">Partidos</div></div>
+      <div class="kpi green"><div class="kpi-val">${wins}</div><div class="kpi-label">Victorias</div></div>
+      <div class="kpi red"><div class="kpi-val">${avgUFE}</div><div class="kpi-label">ENF/p</div></div>
+      <div class="kpi green"><div class="kpi-val">${avgW}</div><div class="kpi-label">Win/p</div></div>
+      <div class="kpi blue"><div class="kpi-val">${avgAce}</div><div class="kpi-label">Aces/p</div></div>
+    </div>
+
+    ${player.winnerShots?.length ? `<p style="font-size:12px;margin:8px 0 2px;"><strong style="color:#009944;">🏆 Golpes ganadores:</strong> ${player.winnerShots.map(s=>SHOT_L[s]||s).join(', ')}</p>` : ''}
+    ${player.worstShot ? `<p style="font-size:12px;margin:2px 0 8px;"><strong style="color:#cc2200;">⚠ Peor golpe:</strong> ${SHOT_L[player.worstShot]||player.worstShot}</p>` : ''}
+    ${player.strengths ? `<p style="font-size:12px;"><strong>Fortalezas:</strong> ${player.strengths}</p>` : ''}
+    ${player.weaknesses ? `<p style="font-size:12px;"><strong>Debilidades:</strong> ${player.weaknesses}</p>` : ''}
+
+    ${insights.length ? `<div style="margin-top:10px;">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:6px;">Insights</div>
+      ${insights.map(i => `<div class="insight-block ${i.type}">${i.text}</div>`).join('')}
+    </div>` : ''}
+
+    ${notes.length ? `<div style="margin-top:10px;">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:6px;">Notas del coach</div>
+      ${notes.map(n => `<div style="font-size:11px;padding:5px 0;border-bottom:1px solid #eee;"><span style="color:#888;">${n.date||''} · ${n.type||''}</span><br>${n.text}</div>`).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
+function buildTournamentSection(tournament, allMatches) {
+  const tMatches  = allMatches.filter(m => m.tournamentId === tournament.id);
+  const tFinished = tMatches.filter(m => m.status==='finished');
+  const tPending  = tMatches.filter(m => m.status==='pending');
+
+  const totalW   = tFinished.reduce((a,m) => a+((m.stats?.p1?.winners||0)+(m.stats?.p2?.winners||0)),0);
+  const totalUFE = tFinished.reduce((a,m) => a+((m.stats?.p1?.ufe||0)+(m.stats?.p2?.ufe||0)),0);
+  const totalAce = tFinished.reduce((a,m) => a+((m.stats?.p1?.aces||0)+(m.stats?.p2?.aces||0)),0);
+  const totalDF  = tFinished.reduce((a,m) => a+((m.stats?.p1?.doubleFaults||0)+(m.stats?.p2?.doubleFaults||0)),0);
+
+  // Players involved
+  const playerIds = [...new Set(tFinished.flatMap(m => [m.p1,m.p2]).filter(Boolean))];
+  const players = playerIds.map(id => db.players.find(p=>p.id===id)).filter(Boolean);
+
+  const matchRows = tFinished.map(m => {
+    const wn = m.winnerId ? playerName(m.winnerId) : '—';
+    return `<tr>
+      <td>${formatDate(m.date)}</td>
+      <td>${playerName(m.p1)}</td>
+      <td>${playerName(m.p2)}</td>
+      <td><strong>${m.result||'—'}</strong></td>
+      <td><strong style="color:#009944;">${wn}</strong></td>
+      <td>${m.stats?.p1?.winners||0} / ${m.stats?.p2?.winners||0}</td>
+      <td>${m.stats?.p1?.ufe||0} / ${m.stats?.p2?.ufe||0}</td>
+    </tr>`;
+  }).join('');
+
+  const pendingRows = tPending.map(m => `<tr>
+    <td>${formatDate(m.date)}</td>
+    <td>${playerName(m.p1)}</td>
+    <td>${playerName(m.p2)}</td>
+    <td colspan="4" style="color:#888;">Pendiente · ${m.time||''} ${m.place?'· '+m.place:''}</td>
+  </tr>`).join('');
+
+  return `
+  <div class="page-break"></div>
+  <h2>🏆 ${tournament.name}</h2>
+  <p style="font-size:12px;color:#666;margin-bottom:14px;">${formatDate(tournament.dateFrom)} — ${formatDate(tournament.dateTo)} · ${surfaceLabel(tournament.surface)} · ${tFinished.length} partidos jugados · ${tPending.length} pendientes</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-val">${tFinished.length}</div><div class="kpi-label">Jugados</div></div>
+    <div class="kpi green"><div class="kpi-val">${totalW}</div><div class="kpi-label">Winners</div></div>
+    <div class="kpi red"><div class="kpi-val">${totalUFE}</div><div class="kpi-label">ENF</div></div>
+    <div class="kpi blue"><div class="kpi-val">${totalAce}</div><div class="kpi-label">Aces</div></div>
+    <div class="kpi orange"><div class="kpi-val">${totalDF}</div><div class="kpi-label">2DF</div></div>
+  </div>
+
+  ${tFinished.length || tPending.length ? `
+  <h3>Partidos</h3>
+  <table>
+    <thead><tr><th>Fecha</th><th>Jugador 1</th><th>Jugador 2</th><th>Resultado</th><th>Ganador</th><th>Win P1/P2</th><th>ENF P1/P2</th></tr></thead>
+    <tbody>${matchRows}${pendingRows}</tbody>
+  </table>` : '<p style="color:#888;font-size:12px;">Sin partidos registrados en este torneo.</p>'}
+
+  ${players.length ? `<h3>Jugadores</h3>${players.map(p => buildPlayerInsights(p, tMatches)).join('')}` : ''}`;
+}
+
+function exportPDFTournament(tournamentId) {
+  const tournament = getTournament(tournamentId);
+  if (!tournament) { showToast('Torneo no encontrado', 'error'); return; }
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe — ${tournament.name}</title>${buildPDFStyles()}</head><body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  <div class="page">
+    ${buildPDFCover(tournament.name, `${formatDate(tournament.dateFrom)} — ${formatDate(tournament.dateTo)}`)}
+    ${buildTournamentSection(tournament, db.matches)}
+    <div class="footer">Tennis Coach Tracker · Emmanuel Diez Lopez · EDL Academy</div>
+  </div></body></html>`;
+
+  openPrintWindow(html, `Informe_${tournament.name.replace(/\s/g,'_')}`);
+}
+
+function exportPDFAll() {
+  const tournaments = getTournaments().filter(t => db.matches.some(m => m.tournamentId===t.id));
+  const noTournament = db.matches.filter(m => m.status==='finished' && !m.tournamentId);
+
+  let body = buildPDFCover('Informe Completo', 'Todos los torneos y partidos registrados');
+
+  // Summary
+  const finished = db.matches.filter(m=>m.status==='finished');
+  body += `<h2>Resumen General</h2>
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="kpi-val">${db.players.length}</div><div class="kpi-label">Jugadores</div></div>
+    <div class="kpi"><div class="kpi-val">${finished.length}</div><div class="kpi-label">Partidos</div></div>
+    <div class="kpi"><div class="kpi-val">${tournaments.length}</div><div class="kpi-label">Torneos</div></div>
+    <div class="kpi"><div class="kpi-val">${db.events.length}</div><div class="kpi-label">Eventos</div></div>
+  </div>`;
+
+  // All players overview
+  if (db.players.length) {
+    body += `<h2>Ficha de Jugadores</h2>`;
+    db.players.forEach(p => {
+      body += buildPlayerInsights(p, db.matches);
+    });
+  }
+
+  // Tournaments
+  tournaments.forEach(t => {
+    body += buildTournamentSection(t, db.matches);
+  });
+
+  // Matches without tournament
+  if (noTournament.length) {
+    body += `<div class="page-break"></div><h2>Partidos sin torneo asignado</h2>
+    <table>
+      <thead><tr><th>Fecha</th><th>Jugador 1</th><th>Jugador 2</th><th>Resultado</th><th>Ganador</th><th>Win</th><th>ENF</th></tr></thead>
+      <tbody>${noTournament.map(m => `<tr>
+        <td>${formatDate(m.date)}</td>
+        <td>${playerName(m.p1)}</td><td>${playerName(m.p2)}</td>
+        <td><strong>${m.result||'—'}</strong></td>
+        <td style="color:#009944;">${m.winnerId?playerName(m.winnerId):'—'}</td>
+        <td>${(m.stats?.p1?.winners||0)}/${(m.stats?.p2?.winners||0)}</td>
+        <td>${(m.stats?.p1?.ufe||0)}/${(m.stats?.p2?.ufe||0)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe Completo TCT</title>${buildPDFStyles()}</head><body>
+  <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+  <div class="page">${body}
+    <div class="footer">Tennis Coach Tracker · Emmanuel Diez Lopez · EDL Academy</div>
+  </div></body></html>`;
+
+  openPrintWindow(html, 'Informe_Completo_TCT');
+}
+
+function openPrintWindow(html, filename) {
+  const win = window.open('', '_blank');
+  if (!win) { showToast('Activa las ventanas emergentes del navegador', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  showToast('📄 Informe listo — usa Ctrl+P para guardar como PDF');
+}
+
+function printReport() { exportPDFAll(); }
 
 function importJSON(event) {
   const file = event.target.files[0];
